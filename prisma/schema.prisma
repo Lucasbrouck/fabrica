@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  cnpj      String?
+  phone     String?
+  postalCode String?
+  address    String?
+  addressNumber String?
+  complement String?
+  province   String?
+  city       String?
+  state      String?
+  role      String   @default("CUSTOMER") // ADMIN, GESTOR, SEPARADOR or CUSTOMER
+  asaasCustomerId String?
+  orders    Order[]
+  tickets   Ticket[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ticket {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  type        String   @default("GENERAL") // GENERAL or ORDER_ISSUE
+  reason      String
+  description String
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED
+  evidences   TicketEvidence[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TicketEvidence {
+  id        String @id @default(cuid())
+  ticketId  String
+  ticket    Ticket @relation(fields: [ticketId], references: [id])
+  url       String // Could be base64 or a real URL
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  price       Float
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  displayId   Int         @unique @default(autoincrement())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  status      OrderStatus @default(PLACED)
+  items       OrderItem[]
+  tickets     Ticket[]
+  totalPrice  Float
+  discount    Float       @default(0)
+  signature   String?     // Base64 signature
+  
+  // Asaas Payment Info
+  asaasPaymentId      String?
+  asaasPaymentStatus  String?
+  asaasPaymentUrl     String?
+  asaasPaymentDueDate String?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+}
