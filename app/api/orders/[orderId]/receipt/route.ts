@@ -9,7 +9,7 @@ export async function POST(
   
   try {
     const body = await request.json();
-    const { signature } = body;
+    const { signature, receiverName } = body;
 
     if (!signature) {
       return NextResponse.json({ error: 'Assinatura é obrigatória' }, { status: 400 });
@@ -19,8 +19,9 @@ export async function POST(
       where: { id: orderId },
       data: {
         signature,
+        receiverName: receiverName || null,
         status: 'DELIVERED',
-      },
+      } as any,
     });
 
     return NextResponse.json({ success: true, order });

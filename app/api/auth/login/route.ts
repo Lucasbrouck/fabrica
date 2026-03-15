@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       id: user.id,
       email: user.email,
       role: user.role,
+      mustChangePassword: user.mustChangePassword,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()

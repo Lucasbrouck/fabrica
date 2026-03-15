@@ -1,4 +1,4 @@
-export const ASAAS_API_URL = "https://api-sandbox.asaas.com/v3";
+export const ASAAS_API_URL = "https://api.asaas.com/v3";
 
 function getApiKey() {
   let key = process.env.ASAAS_API_KEY;
@@ -61,7 +61,7 @@ export async function createAsaasCustomer(user: {
   return data;
 }
 
-export async function createAsaasPayment(customerId: string, value: number, description: string) {
+export async function createAsaasPayment(customerId: string, value: number, description: string, dueDays: number = 28) {
   const url = `${ASAAS_API_URL}/lean/payments`;
   const key = getApiKey();
 
@@ -76,9 +76,9 @@ export async function createAsaasPayment(customerId: string, value: number, desc
     },
     body: JSON.stringify({
       customer: customerId,
-      billingType: 'PIX',
+      billingType: 'BOLETO',
       value: value,
-      dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       description: description,
     })
   };
@@ -90,6 +90,32 @@ export async function createAsaasPayment(customerId: string, value: number, desc
   if (!response.ok) {
     console.error("[Asaas] Erro ao criar cobrança:", data);
     throw new Error(data.errors?.[0]?.description || "Erro ao criar cobrança no Asaas");
+  }
+
+  return data;
+}
+
+export async function getAsaasPayment(paymentId: string) {
+  const url = `${ASAAS_API_URL}/payments/${paymentId}`;
+  const key = getApiKey();
+
+  if (!key) throw new Error("ASAAS_API_KEY não configurada");
+
+  const options = {
+    method: 'GET',
+    headers: {
+      'accept': 'application/json',
+      'access_token': key
+    }
+  };
+
+  console.log(`[Asaas] Fetching Single Payment: ${url}`);
+  const response = await fetch(url, options);
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("[Asaas] Erro ao buscar cobrança:", data);
+    throw new Error(data.errors?.[0]?.description || "Erro ao buscar cobrança no Asaas");
   }
 
   return data;

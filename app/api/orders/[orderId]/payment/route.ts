@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { createAsaasCustomer, createAsaasPayment } from '@/lib/asaas';
+import { createAsaasCustomer, createAsaasPayment, getAsaasPayment } from '@/lib/asaas';
 
 export async function POST(
   request: Request,
@@ -24,7 +24,8 @@ export async function POST(
             province: true,
             city: true,
             state: true,
-            asaasCustomerId: true
+            asaasCustomerId: true,
+            boletoDueDays: true
           }
         }, 
         items: { include: { product: true } } 
@@ -74,8 +75,17 @@ export async function POST(
     const payment = await createAsaasPayment(
       customerAsaasId!,
       order.totalPrice,
-      `Pedido #${(order as any).displayId} - PDV Fábrica`
+      `Pedido #${(order as any).displayId} - PDV Fábrica`,
+      order.user.boletoDueDays || 28
     );
+
+    // 2.5 Fetch full payment to extract bankSlipUrl
+    let fullPayment = payment;
+    try {
+      fullPayment = await getAsaasPayment(payment.id);
+    } catch (fetchErr) {
+      console.warn("[Asaas] Could not fetch full payment, falling back.", fetchErr);
+    }
 
     // 3. Save payment info to order (using raw SQL to bypass outdated Prisma Client)
     try {
@@ -84,7 +94,7 @@ export async function POST(
         SET 
           "asaasPaymentId" = ${payment.id}, 
           "asaasPaymentStatus" = ${payment.status || 'PENDING'}, 
-          "asaasPaymentUrl" = ${payment.invoiceUrl}, 
+          "asaasPaymentUrl" = ${fullPayment.bankSlipUrl || payment.invoiceUrl}, 
           "asaasPaymentDueDate" = ${payment.dueDate}
         WHERE id = ${orderId}
       `;
@@ -94,8 +104,8 @@ export async function POST(
     }
 
     return NextResponse.json({ 
-      paymentUrl: payment.invoiceUrl, 
-      bankSlipUrl: payment.bankSlipUrl,
+      paymentUrl: fullPayment.bankSlipUrl || payment.invoiceUrl, 
+      bankSlipUrl: fullPayment.bankSlipUrl,
       paymentId: payment.id 
     });
 

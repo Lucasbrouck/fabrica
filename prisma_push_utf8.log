@@ -1,0 +1,11 @@
+﻿Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "railway", schema "public" at "metro.proxy.rlwy.net:48638"
+
+Your database is now in sync with your Prisma schema. Done in 6.57s
+
+Running generate... (Use --skip-generate to skip the generators)
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[GEPERM: operation not permitted, unlink 'C:\Users\lucas\OneDrive\Documentos\pdv f
+abrica\node_modules\.prisma\client\query_engine-windows.dll.node'
+

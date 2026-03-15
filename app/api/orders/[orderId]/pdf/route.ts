@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
+import { PDFDocument } from 'pdf-lib';
 
 export async function GET(
   request: Request,
@@ -71,7 +72,9 @@ export async function GET(
     doc.text(totalText, pageWidth - 15, finalY + 15, { align: 'right' });
 
     // QR Code for Signature
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
     const qrUrl = `${baseUrl}/receipt/${order.id}`;
     const qrDataUrl = await QRCode.toDataURL(qrUrl);
     
@@ -92,8 +95,37 @@ export async function GET(
     doc.text('Este documento é um romaneio de simples conferência.', pageWidth / 2, 285, { align: 'center' });
 
     const pdfBuffer = doc.output('arraybuffer');
+    let finalPdfBuffer: any = pdfBuffer;
 
-    return new NextResponse(pdfBuffer, {
+    if (order.asaasPaymentUrl && order.asaasPaymentUrl.startsWith('http')) {
+      try {
+        console.log(`[PDF Merge] Fetching boleto from: ${order.asaasPaymentUrl}`);
+        const boletoRes = await fetch(order.asaasPaymentUrl);
+        if (boletoRes.ok) {
+          const boletoBuffer = await boletoRes.arrayBuffer();
+
+          const mergedPdf = await PDFDocument.create();
+          
+          const romaneioDoc = await PDFDocument.load(pdfBuffer);
+          const romaneioPages = await mergedPdf.copyPages(romaneioDoc, romaneioDoc.getPageIndices());
+          romaneioPages.forEach((page) => mergedPdf.addPage(page));
+
+          const boletoDoc = await PDFDocument.load(boletoBuffer);
+          const boletoPages = await mergedPdf.copyPages(boletoDoc, boletoDoc.getPageIndices());
+          boletoPages.forEach((page) => mergedPdf.addPage(page));
+
+          const mergedPdfBytes = await mergedPdf.save();
+          finalPdfBuffer = mergedPdfBytes.buffer; 
+          console.log("[PDF Merge] PDF merged successfully!");
+        } else {
+           console.warn(`[PDF Merge] Failed to fetch boleto: ${boletoRes.status}`);
+        }
+      } catch (mergeErr) {
+        console.error("[PDF Merge] Error combining PDFs, returning romaneio only:", mergeErr);
+      }
+    }
+
+    return new NextResponse(finalPdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename=romaneio_pedido_${order.displayId}.pdf`,

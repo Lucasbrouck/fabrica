@@ -77,15 +77,20 @@ export default function OrderMonitor() {
     fetchOrders();
   };
 
-  const generateAsaasPayment = async (orderId: string) => {
+  const generateAsaasPayment = async (orderId: string, preOpenedWindow?: Window | null) => {
     setAsaasLoading(true);
     try {
       const res = await fetch(`/api/orders/${orderId}/payment`, { method: "POST" });
       const data = await res.json();
       if (res.ok) {
-        window.open(data.paymentUrl, "_blank");
+        if (preOpenedWindow) {
+          preOpenedWindow.location.href = data.paymentUrl;
+        } else {
+          window.open(data.paymentUrl, "_blank");
+        }
         alert("Cobrança gerada com sucesso!");
       } else {
+        preOpenedWindow?.close();
         alert(data.error || "Erro ao gerar cobrança");
       }
     } catch (error) {
@@ -95,9 +100,11 @@ export default function OrderMonitor() {
     }
   };
 
-  const finishDispatch = async (order: any, shouldGenerateAsaas: boolean) => {
+  const finishDispatch = async (order: any, shouldGenerateAsaas: boolean, asaasWindow?: Window | null) => {
     if (shouldGenerateAsaas) {
-      await generateAsaasPayment(order.id);
+      await generateAsaasPayment(order.id, asaasWindow);
+    } else if (asaasWindow) {
+      asaasWindow.close();
     }
     await updateStatus(order.id, "DISPATCHED");
     setConfirmDispatch(null);
@@ -105,9 +112,9 @@ export default function OrderMonitor() {
 
   const columns = [
     { title: "Novos", status: ["PLACED"], icon: Clock, color: "text-blue-600" },
-    { title: "Em separação", status: ["PREPARING", "READY_FOR_PICKUP"], icon: CheckCircle2, color: "text-amber-600" },
+    { title: "Em separação", status: ["PREPARING"], icon: CheckCircle2, color: "text-amber-600" },
+    { title: "Pronto para retirada", status: ["READY_FOR_PICKUP"], icon: CheckCircle, color: "text-emerald-600" },
     { title: "Em Rota", status: ["DISPATCHED"], icon: Truck, color: "text-indigo-600" },
-    { title: "Concluidos", status: ["DELIVERED"], icon: CheckCircle, color: "text-emerald-600" },
   ];
 
   const filteredProducts = products.filter(p => 
@@ -176,21 +183,27 @@ export default function OrderMonitor() {
 
                   <div className="pt-2" onClick={(e) => e.stopPropagation()}>
                     {order.status === "PLACED" && (
-                      <Button variant="primary" size="sm" className="w-full text-xs" onClick={() => updateStatus(order.id, "PREPARING")}>
-                        Aceitar Pedido
+                      <Button variant="primary" size="sm" className="w-full text-xs font-bold" onClick={() => updateStatus(order.id, "PREPARING")}>
+                        Iniciar Separação
                       </Button>
                     )}
-                    {(order.status === "PREPARING" || order.status === "READY_FOR_PICKUP") && (
+                    {order.status === "PREPARING" && (
                        <div className="flex gap-2">
                          <Button variant="ghost" size="sm" className="w-1/3 text-xs" onClick={() => updateStatus(order.id, "PLACED")}>
                            Voltar
                          </Button>
-                         <Button 
-                          size="sm" 
-                          className={`w-2/3 text-xs ${order.status === "READY_FOR_PICKUP" ? "bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 animate-pulse" : "bg-indigo-500 hover:bg-indigo-600"}`} 
-                          onClick={() => setConfirmDispatch(order)}
-                         >
-                           {order.status === "READY_FOR_PICKUP" ? "Despachar" : "Enviar"}
+                         <Button size="sm" className="w-2/3 text-xs bg-indigo-500 hover:bg-indigo-600 font-bold" onClick={() => updateStatus(order.id, "READY_FOR_PICKUP")}>
+                           Pedido Separado
+                         </Button>
+                       </div>
+                    )}
+                    {order.status === "READY_FOR_PICKUP" && (
+                       <div className="flex gap-2">
+                         <Button variant="ghost" size="sm" className="w-1/3 text-xs" onClick={() => updateStatus(order.id, "PREPARING")}>
+                           Voltar
+                         </Button>
+                         <Button size="sm" className="w-2/3 text-xs bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 animate-pulse" onClick={() => setConfirmDispatch(order)}>
+                           Despachar
                          </Button>
                        </div>
                     )}
@@ -423,12 +436,17 @@ export default function OrderMonitor() {
                     <div className="flex">
                       {selectedOrder.status === "PLACED" && (
                         <Button variant="primary" className="w-full py-4 text-xs font-bold uppercase tracking-widest shadow-lg shadow-blue-100" onClick={() => { updateStatus(selectedOrder.id, "PREPARING"); setSelectedOrder(null); }}>
-                          Aceitar Pedido
+                          Iniciar Separação
                         </Button>
                       )}
                       {selectedOrder.status === "PREPARING" && (
-                        <Button className="w-full py-4 text-xs font-bold uppercase tracking-widest bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-100" onClick={() => { setConfirmDispatch(selectedOrder); setSelectedOrder(null); }}>
-                          Enviar Pedido
+                        <Button className="w-full py-4 text-xs font-bold uppercase tracking-widest bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg shadow-indigo-100" onClick={() => { updateStatus(selectedOrder.id, "READY_FOR_PICKUP"); setSelectedOrder(null); }}>
+                          Pedido Separado
+                        </Button>
+                      )}
+                      {selectedOrder.status === "READY_FOR_PICKUP" && (
+                        <Button className="w-full py-4 text-xs font-bold uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-100 animate-pulse" onClick={() => { setConfirmDispatch(selectedOrder); setSelectedOrder(null); }}>
+                          Despachar
                         </Button>
                       )}
                       {selectedOrder.status === "DISPATCHED" && (
@@ -457,27 +475,25 @@ export default function OrderMonitor() {
               </div>
 
               <div className="space-y-4">
-                <Button 
-                   variant="secondary" 
-                   className="w-full flex items-center justify-center gap-3 py-6 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                   onClick={() => window.open(`/api/orders/${confirmDispatch.id}/pdf`, "_blank")}
-                >
-                   <FileText size={20} /> Baixar Romaneio (PDF)
-                </Button>
-
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Ações de Cobrança</p>
+                <div className="space-y-3">
                   <Button 
-                    className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100"
+                    className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 uppercase font-black tracking-widest"
                     disabled={asaasLoading}
-                    onClick={() => finishDispatch(confirmDispatch, true)}
+                    onClick={() => {
+                      window.open(`/api/orders/${confirmDispatch.id}/pdf`, "_blank");
+                      const asaasWindow = window.open('about:blank', '_blank');
+                      finishDispatch(confirmDispatch, true, asaasWindow);
+                    }}
                   >
                     {asaasLoading ? <Loader2 className="animate-spin" /> : "Gerar Cobrança Asaas & Enviar"}
                   </Button>
                   <Button 
-                    variant="ghost"
-                    className="w-full py-4 text-slate-500 hover:text-slate-700 text-sm font-bold"
-                    onClick={() => finishDispatch(confirmDispatch, false)}
+                    variant="ghost" 
+                    className="w-full py-3 text-slate-400 hover:text-slate-600 text-xs font-bold uppercase tracking-wide"
+                    onClick={() => {
+                      window.open(`/api/orders/${confirmDispatch.id}/pdf`, "_blank");
+                      finishDispatch(confirmDispatch, false);
+                    }}
                   >
                     Enviar sem cobrança
                   </Button>

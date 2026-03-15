@@ -32,7 +32,9 @@ model User {
   city       String?
   state      String?
   role      String   @default("CUSTOMER") // ADMIN, GESTOR, SEPARADOR or CUSTOMER
-  asaasCustomerId String?
+  mustChangePassword Boolean @default(false)
+  boletoDueDays      Int     @default(28)
+  asaasCustomerId   String?
   orders    Order[]
   tickets   Ticket[]
   createdAt DateTime @default(now())
@@ -90,6 +92,7 @@ model Order {
   totalPrice  Float
   discount    Float       @default(0)
   signature   String?     // Base64 signature
+  receiverName String?    // Nome de quem recebeu
   
   // Asaas Payment Info
   asaasPaymentId      String?

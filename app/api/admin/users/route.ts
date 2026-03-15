@@ -29,11 +29,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, role } = await request.json();
+    const body = await request.json();
+    const { email, password, name, role } = body;
 
-    if (!email || !password || !name) {
+    if (!email || !name) {
       return NextResponse.json(
-        { error: "Todos os campos são obrigatórios" },
+        { error: "Nome e Email são obrigatórios" },
         { status: 400 }
       );
     }
@@ -49,7 +50,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const defaultPassword = "123456";
+    const finalPassword = password || defaultPassword;
+    const mustChange = !password; // If password not sent, Admin created with default
+
+    const hashedPassword = await bcrypt.hash(finalPassword, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -57,6 +62,16 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         name,
         role: role || "CUSTOMER",
+        mustChangePassword: mustChange,
+        cnpj: role === "CUSTOMER" ? body.cnpj : undefined,
+        phone: role === "CUSTOMER" ? body.phone : undefined,
+        postalCode: role === "CUSTOMER" ? body.postalCode : undefined,
+        address: role === "CUSTOMER" ? body.address : undefined,
+        addressNumber: role === "CUSTOMER" ? body.addressNumber : undefined,
+        complement: role === "CUSTOMER" ? body.complement : undefined,
+        province: role === "CUSTOMER" ? body.province : undefined,
+        city: role === "CUSTOMER" ? body.city : undefined,
+        state: role === "CUSTOMER" ? body.state : undefined,
       },
       select: {
         id: true,

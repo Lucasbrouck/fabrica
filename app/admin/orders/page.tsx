@@ -24,6 +24,7 @@ export default function AdminOrders() {
   const [confirmDispatch, setConfirmDispatch] = useState<any | null>(null);
   const [asaasLoading, setAsaasLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
+  const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
   
   // Create Order State
   const [isCreating, setIsCreating] = useState(false);
@@ -104,6 +105,23 @@ export default function AdminOrders() {
     setConfirmDispatch(null);
   };
 
+  const updateCartQuantity = (product: any, delta: number) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        const newQuantity = existing.quantity + delta;
+        if (newQuantity <= 0) {
+          return prev.filter(item => item.id !== product.id);
+        }
+        return prev.map(item => item.id === product.id ? { ...item, quantity: newQuantity } : item);
+      }
+      if (delta > 0) {
+        return [...prev, { ...product, quantity: delta }];
+      }
+      return prev;
+    });
+  };
+
   const handleCreateOrder = async () => {
     if (!selectedUser || cart.length === 0) return;
 
@@ -157,10 +175,15 @@ export default function AdminOrders() {
     { label: "Concluídos", value: "DELIVERED" },
   ];
 
-  const filteredOrders = orders.filter(o => 
-    activeFilter === "ALL" || 
-    (activeFilter === "PREPARING" ? ["PREPARING", "READY_FOR_PICKUP"].includes(o.status) : o.status === activeFilter)
-  );
+  const filteredOrders = orders.filter(o => {
+    const matchesStatus = activeFilter === "ALL" || 
+      (activeFilter === "PREPARING" ? ["PREPARING", "READY_FOR_PICKUP"].includes(o.status) : o.status === activeFilter);
+      
+    const matchesPayment = paymentFilter === "ALL" || 
+      (paymentFilter === "CONFIRMED" ? ["CONFIRMED", "RECEIVED"].includes(o.asaasPaymentStatus) : o.asaasPaymentStatus === paymentFilter);
+      
+    return matchesStatus && matchesPayment;
+  });
 
   const filteredUsers = users.filter(u => 
     u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
@@ -197,21 +220,45 @@ export default function AdminOrders() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 pb-2">
-        {filters.map(f => (
-          <button
-            key={f.value}
-            onClick={() => setActiveFilter(f.value)}
-            className={cn(
-              "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
-              activeFilter === f.value 
-                ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100" 
-                : "bg-white text-slate-500 border-slate-200 hover:border-blue-300"
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex flex-col gap-3 pb-2">
+        <div className="flex flex-wrap gap-2">
+          {filters.map(f => (
+            <button
+              key={f.value}
+              onClick={() => setActiveFilter(f.value)}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                activeFilter === f.value 
+                  ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100" 
+                  : "bg-white text-slate-500 border-slate-200 hover:border-blue-300"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Todas Cobranças", value: "ALL" },
+            { label: "Pendentes", value: "PENDING" },
+            { label: "Pagas", value: "CONFIRMED" },
+            { label: "Vencidas", value: "OVERDUE" }
+          ].map(f => (
+            <button
+              key={f.value}
+              onClick={() => setPaymentFilter(f.value)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border",
+                paymentFilter === f.value 
+                  ? "bg-slate-900 text-white border-slate-900 shadow-sm" 
+                  : "bg-white/80 text-slate-500 border-slate-100 hover:border-slate-300"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* List View */}
@@ -224,6 +271,7 @@ export default function AdminOrders() {
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cliente</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Data/Hora</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Cobrança</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Total</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ação</th>
               </tr>
@@ -264,6 +312,20 @@ export default function AdminOrders() {
                         )}>
                           <StatusIcon size={12} />
                           {order.status === "READY_FOR_PICKUP" ? "Separado" : status.label}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex justify-center">
+                        <span className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider",
+                          order.asaasPaymentStatus === "CONFIRMED" || order.asaasPaymentStatus === "RECEIVED" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
+                          order.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600 border border-red-100" : 
+                          order.asaasPaymentStatus === "PENDING" ? "bg-amber-50 text-amber-600 border border-amber-100" : "bg-slate-50 text-slate-500 border border-slate-100"
+                        )}>
+                          {order.asaasPaymentStatus === "CONFIRMED" || order.asaasPaymentStatus === "RECEIVED" ? "PAGO" :
+                           order.asaasPaymentStatus === "OVERDUE" ? "VENCIDO" :
+                           order.asaasPaymentStatus === "PENDING" ? "PENDENTE" : "AGUARDANDO"}
                         </span>
                       </div>
                     </td>
@@ -326,118 +388,193 @@ export default function AdminOrders() {
                     />
                   </div>
                </div>
+               
                <div className="flex-1 overflow-y-auto p-6 pt-0 space-y-4 custom-scrollbar">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredProducts.map(p => (
-                      <button 
-                         key={p.id}
-                         onClick={() => {
-                           const existing = cart.find(item => item.id === p.id);
-                           if (existing) {
-                             setCart(cart.map(item => item.id === p.id ? { ...item, quantity: item.quantity + 1 } : item));
-                           } else {
-                             setCart([...cart, { ...p, quantity: 1 }]);
-                           }
-                         }}
-                         className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-400 text-left transition-all hover:shadow-md group"
-                      >
-                         <h4 className="font-bold text-slate-800 text-sm group-hover:text-blue-600 uppercase mb-1">{p.name}</h4>
-                         <p className="text-blue-600 font-black">{formatPrice(p.price)}</p>
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {filteredProducts.map(p => {
+                      const cartItem = cart.find(item => item.id === p.id);
+                      const quantity = cartItem?.quantity || 0;
+                      
+                      return (
+                        <div 
+                           key={p.id}
+                           className={cn(
+                             "bg-white p-3 rounded-2xl border transition-all flex flex-col justify-between min-h-[120px]",
+                             quantity > 0 ? "border-blue-600 ring-2 ring-blue-500/10 shadow-md" : "border-slate-200"
+                           )}
+                        >
+                           <div>
+                             <h4 className="font-bold text-slate-800 text-[11px] uppercase mb-1 line-clamp-2 leading-tight">{p.name}</h4>
+                             <p className="text-blue-600 font-black text-sm">{formatPrice(p.price)}</p>
+                           </div>
+
+                           <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-50">
+                              {quantity === 0 ? (
+                                <button 
+                                  onClick={() => updateCartQuantity(p, 1)}
+                                  className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors text-[10px] font-black uppercase"
+                                >
+                                  <Plus size={14} /> Adicionar
+                                </button>
+                              ) : (
+                                <div className="flex items-center justify-between w-full">
+                                  <button 
+                                    onClick={() => updateCartQuantity(p, -1)}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                  >
+                                    <Minus size={14} />
+                                  </button>
+                                  <span className="text-sm font-black text-blue-600">{quantity}</span>
+                                  <button 
+                                    onClick={() => updateCartQuantity(p, 1)}
+                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                      );
+                    })}
                   </div>
                </div>
             </div>
 
             {/* Right Column: Order Details & User */}
-            <div className="w-[400px] flex flex-col bg-white overflow-hidden">
+            <div className="w-[380px] flex flex-col bg-white overflow-hidden">
                <div className="p-6 border-b border-slate-50 space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cliente</label>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cliente Solicitante</label>
                     {selectedUser ? (
-                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold">
-                            {selectedUser.name[0]}
+                      <div className="flex items-center justify-between p-4 bg-slate-900 text-white rounded-[1.5rem] shadow-xl shadow-slate-200 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold shrink-0">
+                            {selectedUser.name[0].toUpperCase()}
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-900 text-sm leading-tight">{selectedUser.name}</p>
-                            <p className="text-[10px] text-blue-600 font-bold uppercase">{selectedUser.email}</p>
+                          <div className="overflow-hidden">
+                            <p className="font-bold text-sm leading-tight truncate">{selectedUser.name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase truncate">{selectedUser.email}</p>
                           </div>
                         </div>
-                        <button onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-red-500"><X size={18} /></button>
+                        <button 
+                          onClick={() => {
+                            setSelectedUser(null);
+                            setUserSearch("");
+                          }} 
+                          className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-[10px] font-black uppercase transition-colors shrink-0"
+                        >
+                          Alterar
+                        </button>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="relative group">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                          <Search size={18} />
+                        </div>
                         <input 
                           type="text" 
-                          placeholder="Pesquisar cliente..." 
+                          placeholder="Nome ou e-mail do cliente..." 
                           value={userSearch}
                           onChange={(e) => setUserSearch(e.target.value)}
-                          className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all font-medium"
                         />
-                        <div className="max-h-[120px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                           {filteredUsers.slice(0, 5).map(u => (
-                             <button 
-                               key={u.id}
-                               onClick={() => setSelectedUser(u)}
-                               className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-600 flex items-center gap-2"
-                             >
-                               <User size={14} /> {u.name}
-                             </button>
-                           ))}
-                        </div>
+                        
+                        {userSearch.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-100 shadow-2xl z-[110] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="max-h-[240px] overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                              {filteredUsers.length > 0 ? filteredUsers.slice(0, 10).map(u => (
+                                <button 
+                                  key={u.id}
+                                  onClick={() => setSelectedUser(u)}
+                                  className="w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-3 group/item"
+                                >
+                                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover/item:bg-blue-600 group-hover/item:text-white transition-colors shrink-0">
+                                    <User size={14} />
+                                  </div>
+                                  <div className="overflow-hidden">
+                                    <p className="text-xs font-black text-slate-700 truncate">{u.name}</p>
+                                    <p className="text-[9px] text-slate-400 truncate uppercase mt-0.5">{u.email}</p>
+                                  </div>
+                                </button>
+                              )) : (
+                                <div className="p-4 text-center">
+                                  <p className="text-xs text-slate-400 font-bold">Nenhum cliente encontrado</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                </div>
 
-               <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Carrinho ({cart.length})</h3>
-                  {cart.map((item, idx) => (
-                    <div key={item.id} className="flex flex-col gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                       <div className="flex justify-between items-start">
-                         <span className="font-bold text-slate-800 text-xs uppercase">{item.name}</span>
-                         <button onClick={() => setCart(cart.filter(c => c.id !== item.id))} className="text-slate-300 hover:text-red-500"><X size={16} /></button>
+               <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar bg-slate-50/30">
+                  <div className="flex justify-between items-center px-1">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carrinho ({cart.reduce((acc, i) => acc + i.quantity, 0)} itens)</h3>
+                    {cart.length > 0 && (
+                      <button 
+                        onClick={() => setCart([])}
+                        className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest"
+                      >
+                        Limpar Tudo
+                      </button>
+                    )}
+                  </div>
+                  
+                  {cart.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center py-20 opacity-20 text-slate-900 space-y-2">
+                       <ShoppingBasket size={32} />
+                       <p className="text-[10px] font-black uppercase tracking-widest">Carrinho Vazio</p>
+                    </div>
+                  ) : cart.map((item) => (
+                    <div key={item.id} className="flex items-center gap-2 p-2.5 bg-white rounded-xl border border-slate-100 shadow-sm animate-in slide-in-from-right-4 duration-200">
+                       <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-black text-[11px] shrink-0">
+                          {item.quantity}x
                        </div>
-                       <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-3 bg-white px-2 py-1 rounded-xl shadow-sm border border-slate-100">
-                             <button onClick={() => {
-                               if (item.quantity > 1) {
-                                  setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity - 1 } : c));
-                               } else {
-                                  setCart(cart.filter(c => c.id !== item.id));
-                               }
-                             }} className="p-1 text-slate-400 hover:text-blue-600"><Minus size={14} /></button>
-                             <span className="text-sm font-black w-4 text-center">{item.quantity}</span>
-                             <button onClick={() => setCart(cart.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c))} className="p-1 text-slate-400 hover:text-blue-600"><Plus size={14} /></button>
-                          </div>
-                          <span className="font-black text-slate-900">{formatPrice(item.price * item.quantity)}</span>
+                       <div className="flex-1 overflow-hidden">
+                          <p className="font-bold text-slate-800 text-[10px] uppercase truncate leading-tight">{item.name}</p>
+                          <p className="text-[10px] text-blue-600 font-black mt-0.5">{formatPrice(item.price * item.quantity)}</p>
+                       </div>
+                       <div className="flex gap-0.5 shrink-0">
+                         <button 
+                           onClick={() => updateCartQuantity(item, -1)}
+                           className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                         >
+                           <Minus size={12} />
+                         </button>
+                         <button 
+                           onClick={() => updateCartQuantity(item, 1)}
+                           className="p-1 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all"
+                         >
+                           <Plus size={12} />
+                         </button>
                        </div>
                     </div>
                   ))}
                </div>
 
-               <div className="p-6 border-t border-slate-50 space-y-4">
-                  <div className="space-y-4 bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                     <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+               <div className="p-4 border-t border-slate-50 space-y-3 shrink-0 bg-white">
+                  <div className="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
                         <span>SUBTOTAL</span>
                         <span>{formatPrice(cart.reduce((acc, i) => acc + i.price * i.quantity, 0))}</span>
                      </div>
-                     <div className="flex justify-between items-center text-xs font-bold text-red-500">
-                        <div className="flex items-center gap-2">
-                           <Tag size={12} />
+                     <div className="flex justify-between items-center text-[10px] font-bold text-red-500">
+                        <div className="flex items-center gap-1.5">
+                           <Tag size={10} />
                            <span>DESCONTO (R$)</span>
                         </div>
                         <input 
                           type="number" 
                           value={discount}
                           onChange={(e) => setDiscount(Number(e.target.value))}
-                          className="w-20 bg-transparent text-right focus:outline-none font-black"
+                          className="w-16 bg-transparent text-right focus:outline-none font-black"
                           placeholder="0,00"
                         />
                      </div>
-                     <div className="flex justify-between items-center text-lg font-black text-blue-600 pt-2 border-t border-slate-200">
+                     <div className="flex justify-between items-center text-base font-black text-blue-600 pt-1.5 border-t border-slate-200">
                         <span>TOTAL</span>
                         <span>{formatPrice(Math.max(0, cart.reduce((acc, i) => acc + i.price * i.quantity, 0) - discount))}</span>
                      </div>
@@ -446,7 +583,7 @@ export default function AdminOrders() {
                   <Button 
                     onClick={handleCreateOrder}
                     disabled={!selectedUser || cart.length === 0}
-                    className="w-full py-7 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-blue-100"
+                    className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[11px] shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
                   >
                     Finalizar e Criar
                   </Button>
@@ -496,6 +633,68 @@ export default function AdminOrders() {
                      <div className="flex justify-between items-center">
                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Valor Final</span>
                         <span className="text-3xl font-black text-blue-600">{formatPrice(selectedOrder.totalPrice)}</span>
+                     </div>
+                  </div>
+
+                  {/* Billing & Receipt Info */}
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Informações de Pagamento</h3>
+                     
+                     <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex flex-col gap-3">
+                        <div className="flex justify-between items-center text-sm">
+                           <span className="font-bold text-slate-500">Status Asaas:</span>
+                           <span className={cn(
+                             "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                             selectedOrder.asaasPaymentStatus === "CONFIRMED" || selectedOrder.asaasPaymentStatus === "RECEIVED" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
+                             selectedOrder.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600 border border-red-100" : "bg-amber-50 text-amber-600 border border-amber-100"
+                           )}>
+                             {selectedOrder.asaasPaymentStatus || "AGUARDANDO GERAÇÃO"}
+                           </span>
+                        </div>
+
+                        {selectedOrder.asaasPaymentDueDate && (
+                           <div className="flex justify-between items-center text-sm">
+                              <span className="font-bold text-slate-500">Vencimento:</span>
+                              <span className="font-black text-slate-800">{selectedOrder.asaasPaymentDueDate}</span>
+                           </div>
+                        )}
+
+                        {selectedOrder.asaasPaymentUrl && (
+                           <a 
+                             href={selectedOrder.asaasPaymentUrl} 
+                             target="_blank" 
+                             className="mt-2 w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md transition-colors"
+                           >
+                             <FileText size={16} /> Baixar Boleto / Pagar
+                           </a>
+                        )}
+                     </div>
+
+                     {/* Receipt proof / Signature */}
+                     <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 space-y-3">
+                        <p className="text-xs font-bold text-slate-500">Detalhes do Recebimento:</p>
+                        {selectedOrder.signature ? (
+                           <div className="space-y-2">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md text-[10px] font-bold uppercase">
+                                 <CheckCircle2 size={12} /> Recebido por {selectedOrder.receiverName || "Cliente"}
+                              </span>
+                              <div className="p-3 bg-white rounded-2xl border border-slate-100 flex justify-center max-h-[120px] overflow-hidden">
+                                 <img src={selectedOrder.signature} alt="Assinatura Recebimento" className="max-h-full object-contain" />
+                              </div>
+                           </div>
+                        ) : selectedOrder.status === "DELIVERED" && !selectedOrder.signature ? (
+                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md text-[10px] font-bold uppercase">
+                              <CheckCircle2 size={12} /> Recebido sem assinatura (Administrador)
+                           </span>
+                        ) : selectedOrder.asaasPaymentStatus === "CONFIRMED" || selectedOrder.asaasPaymentStatus === "RECEIVED" ? (
+                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-50 text-sky-700 rounded-md text-[10px] font-bold uppercase">
+                              <CheckCircle2 size={12} /> Recebido via QR Code / Gateway
+                           </span>
+                        ) : (
+                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[10px] font-bold uppercase">
+                              Aguardando Recebimento
+                           </span>
+                        )}
                      </div>
                   </div>
                </div>

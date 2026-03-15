@@ -16,6 +16,7 @@ export default function ReceiptPage() {
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [receiverName, setReceiverName] = useState("");
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -106,6 +107,11 @@ export default function ReceiptPage() {
     
     const signature = canvas.toDataURL("image/png");
     
+    if (!receiverName.trim()) {
+       alert("Por favor, informe o nome de quem está recebendo.");
+       return;
+    }
+
     // Check if canvas is empty (simplified check)
     if (signature.length < 2000) {
        alert("Por favor, forneça uma assinatura.");
@@ -117,7 +123,7 @@ export default function ReceiptPage() {
       const res = await fetch(`/api/orders/${orderId}/receipt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signature }),
+        body: JSON.stringify({ signature, receiverName }),
       });
 
       if (res.ok) {
@@ -188,6 +194,21 @@ export default function ReceiptPage() {
                  <p className="font-bold text-slate-900 line-clamp-1">{order.user.name}</p>
               </div>
            </div>
+        </div>
+
+        {/* Nome do Recebedor Input */}
+        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col gap-3">
+           <div className="flex items-center gap-2 text-slate-900">
+              <User size={18} className="text-blue-600" />
+              <span className="text-xs font-black uppercase tracking-widest">Nome do Recebedor</span>
+           </div>
+           <input 
+             type="text" 
+             value={receiverName}
+             onChange={(e) => setReceiverName(e.target.value)}
+             className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+             placeholder="Quem está recebendo o pedido?"
+           />
         </div>
 
         {/* Signature Area */}

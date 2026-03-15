@@ -2,12 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui-button";
-import { Clock, CheckCircle2, Package, Search, Filter } from "lucide-react";
+import { Clock, CheckCircle2, Package, Search, Filter, ChevronDown } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
 export default function UserOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (id: string) => {
+    setExpandedOrders(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const [helpOrder, setHelpOrder] = useState<any | null>(null);
   const [helpReason, setHelpReason] = useState("Item a menos");
@@ -67,13 +73,13 @@ export default function UserOrders() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 px-6 pt-20">
-      <div className="max-w-xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Meus Pedidos</h1>
-          <p className="text-slate-500 font-medium">Acompanhe seu histórico de pedidos.</p>
-        </div>
+    <div className="min-h-screen bg-slate-50 pb-24">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center shadow-sm">
+        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">Meus Pedidos</h1>
+      </header>
 
+      <main className="max-w-xl mx-auto p-6 space-y-8">
         <div className="space-y-4">
           {loading ? (
              Array(3).fill(0).map((_, i) => <div key={i} className="h-40 glass rounded-2xl animate-pulse" />)
@@ -98,13 +104,25 @@ export default function UserOrders() {
                   </span>
                 </div>
 
-                <div className="space-y-2 border-y border-white/20 py-4">
-                  {order.items.map((item: any) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-slate-600 font-medium">{item.quantity}x {item.product.name}</span>
-                      <span className="text-slate-900 font-bold">{formatPrice(item.price * item.quantity)}</span>
+                <div className="border-y border-slate-100 py-3">
+                  <button 
+                    onClick={() => toggleExpand(order.id)} 
+                    className="flex justify-between items-center w-full text-slate-500 hover:text-slate-800 transition-colors"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-widest">{order.items.length} {order.items.length === 1 ? 'Item' : 'Itens'}</span>
+                    <ChevronDown size={16} className={`transform transition-transform ${expandedOrders[order.id] ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {expandedOrders[order.id] && (
+                    <div className="space-y-2 pt-3">
+                      {order.items.map((item: any) => (
+                        <div key={item.id} className="flex justify-between text-sm">
+                          <span className="text-slate-600 font-medium">{item.quantity}x {item.product.name}</span>
+                          <span className="text-slate-900 font-bold">{formatPrice(item.price * item.quantity)}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
@@ -113,61 +131,51 @@ export default function UserOrders() {
                 </div>
 
                 <div className="pt-4 flex flex-col gap-3">
-                  {order.status === 'DELIVERED' && order.asaasPaymentId ? (
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status da Cobrança</span>
-                        <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider text-center min-w-[120px] ${
-                          order.asaasPaymentStatus === 'RECEIVED' || order.asaasPaymentStatus === 'RECEIVED_IN_CASH' || order.asaasPaymentStatus === 'CONFIRMED' 
-                            ? 'bg-emerald-100 text-emerald-700' 
-                            : order.asaasPaymentStatus === 'OVERDUE' 
-                              ? 'bg-red-100 text-red-700' 
-                              : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {order.asaasPaymentStatus === 'RECEIVED' || order.asaasPaymentStatus === 'RECEIVED_IN_CASH' || order.asaasPaymentStatus === 'CONFIRMED' ? 'Pago' :
-                           order.asaasPaymentStatus === 'OVERDUE' ? 'Vencido' :
-                           order.asaasPaymentStatus === 'PENDING' ? 'Pagamento Pendente' : 'Gerada'}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vencimento</span>
-                        <span className="text-xs font-bold text-slate-700">
-                          {order.asaasPaymentDueDate ? new Date(order.asaasPaymentDueDate).toLocaleDateString() : 'Não informado'}
+                  {order.status === 'DELIVERED' && order.asaasPaymentId && (
+                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/60 flex items-center justify-between gap-3">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cobrança</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                            order.asaasPaymentStatus === 'RECEIVED' || order.asaasPaymentStatus === 'RECEIVED_IN_CASH' || order.asaasPaymentStatus === 'CONFIRMED' 
+                              ? 'bg-emerald-100 text-emerald-700' 
+                              : order.asaasPaymentStatus === 'OVERDUE' 
+                                ? 'bg-red-100 text-red-700' 
+                                : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {order.asaasPaymentStatus === 'RECEIVED' || order.asaasPaymentStatus === 'RECEIVED_IN_CASH' || order.asaasPaymentStatus === 'CONFIRMED' ? 'Pago' :
+                             order.asaasPaymentStatus === 'OVERDUE' ? 'Vencido' :
+                             order.asaasPaymentStatus === 'PENDING' ? 'Pendente' : 'Gerada'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-medium tracking-tight">
+                          Vencimento: {order.asaasPaymentDueDate ? new Date(order.asaasPaymentDueDate).toLocaleDateString() : 'Não informado'}
                         </span>
                       </div>
 
                       <Button 
                         variant="primary" 
                         size="sm" 
-                        className="w-full text-[10px] font-black uppercase tracking-widest py-4 bg-blue-600 hover:bg-blue-700 font-bold"
+                        className="text-[10px] font-black uppercase tracking-widest bg-blue-600 hover:bg-blue-700 font-bold px-4 py-0 h-8 rounded-lg flex items-center"
                         onClick={() => window.open(order.asaasPaymentUrl, '_blank')}
                       >
-                        Ver Cobrança
+                        Ver
                       </Button>
                     </div>
-                  ) : (order.status === 'PLACED' || order.status === 'CONFIRMED') ? (
-                    <div className="flex gap-2">
-                      <Button variant="secondary" size="sm" className="flex-1 text-xs font-bold">Editar Pedido</Button>
-                      <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => setHelpOrder(order)}>Ajuda</Button>
-                    </div>
-                  ) : (order.status === 'DELIVERED' || order.status === 'CANCELLED') ? (
-                     <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setHelpOrder(order)}>Ajuda</Button>
-                  ) : (
-                    // Status is PREPARING, READY_FOR_PICKUP, or DISPATCHED
-                    <div className="flex flex-col gap-3">
-                      <div className="py-2 text-center border-t border-slate-100 mt-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pedido em processamento - Alterações bloqueadas</p>
-                      </div>
-                      <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setHelpOrder(order)}>Ajuda</Button>
-                    </div>
                   )}
+
+                  <div className="flex gap-2">
+                    {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
+                      <Button variant="secondary" size="sm" className="flex-1 text-xs font-bold">Editar Pedido</Button>
+                    )}
+                    <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => setHelpOrder(order)}>Ajuda</Button>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </main>
 
       {/* Ajuda Modal */}
       {helpOrder && (

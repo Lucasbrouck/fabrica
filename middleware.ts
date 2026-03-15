@@ -50,6 +50,12 @@ export async function middleware(request: NextRequest) {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const role = payload.role as string;
+    const mustChangePassword = payload.mustChangePassword as boolean;
+
+    // Force password change if flagged
+    if (mustChangePassword && pathname !== "/change-password" && !pathname.startsWith("/api/auth")) {
+      return NextResponse.redirect(new URL("/change-password", request.url));
+    }
 
     // Check role permissions for specific routes
     if (pathname.startsWith("/admin") && role !== "ADMIN") {

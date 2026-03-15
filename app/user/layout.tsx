@@ -14,7 +14,7 @@ export default function UserLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-6 py-4 flex justify-around items-center rounded-t-[2rem] shadow-[0_-8px_32px_rgba(0,0,0,0.05)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 py-4 grid grid-cols-3 items-center rounded-t-[2rem] shadow-[0_-8px_32px_rgba(0,0,0,0.05)]">
         <Link href="/user/menu" className={`flex flex-col items-center gap-1 ${pathname === '/user/menu' ? 'text-blue-600' : 'text-slate-400'}`}>
           <ShoppingBag size={24} />
           <span className="text-[10px] font-black uppercase tracking-widest">Produtos</span>
