@@ -622,6 +622,16 @@ export default function AdminOrders() {
                         ))}
                      </div>
                   </div>
+ 
+                  {selectedOrder.notes && (
+                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-2 text-amber-800">
+                       <Tag size={16} className="shrink-0 mt-0.5" />
+                       <div>
+                          <p className="text-xs font-black uppercase tracking-wider mb-0.5">Divergência de Separação</p>
+                          <p className="text-xs font-semibold text-amber-900/80">{selectedOrder.notes}</p>
+                       </div>
+                    </div>
+                  )}
 
                   <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-3">
                      {selectedOrder.discount > 0 && (

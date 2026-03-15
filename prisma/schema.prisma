@@ -93,6 +93,7 @@ model Order {
   discount    Float       @default(0)
   signature   String?     // Base64 signature
   receiverName String?    // Nome de quem recebeu
+  notes        String?    // Observações de divergência
   
   // Asaas Payment Info
   asaasPaymentId      String?

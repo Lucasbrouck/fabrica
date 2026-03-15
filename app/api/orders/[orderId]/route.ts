@@ -42,13 +42,16 @@ export async function PATCH(
   const { orderId } = await params;
   try {
     const body = await request.json();
-    const { status, items } = body;
+    const { status, items, notes } = body;
     
     // If only status is provided
     if (status && !items) {
       const order = await prisma.order.update({
         where: { id: orderId },
-        data: { status: status as OrderStatus },
+        data: { 
+          status: status as OrderStatus,
+          notes: notes !== undefined ? notes : undefined
+        } as any,
       });
       return NextResponse.json(order);
     }
@@ -68,6 +71,7 @@ export async function PATCH(
         data: {
           totalPrice: newTotal,
           status: status as OrderStatus || undefined,
+          notes: notes !== undefined ? notes : undefined,
           items: {
             create: items.map((item: any) => ({
               productId: item.productId,
@@ -75,7 +79,7 @@ export async function PATCH(
               price: item.price,
             })),
           },
-        },
+        } as any,
         include: { items: { include: { product: true } }, user: { select: { name: true } } },
       });
       

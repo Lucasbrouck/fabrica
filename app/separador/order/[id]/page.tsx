@@ -55,10 +55,26 @@ export default function OrderPickingPage() {
   const handleFinishSeparation = async () => {
     setUpdating(true);
     try {
-      // Prepare the items to update the order (editing the actual order!)
+      // 1. Calcular divergências
+      const differences = order.items
+        .filter((item: any) => item.pickedQuantity !== item.quantity)
+        .map((item: any) => {
+           const diff = item.pickedQuantity - item.quantity;
+           const name = item.product?.name || "Item";
+           // Ex: -2 carnes, +1 frango
+           return `${diff > 0 ? '+' : ''}${diff} ${name}`;
+        });
+
+      const autoNote = differences.length > 0 
+        ? `Pedido separado com divergência: ${differences.join(', ')}`
+        : null;
+
+      console.log("[Separador] Divergência calculada:", autoNote);
+
+      // 2. Preparar os itens para atualização
       const updatedItems = order.items.map((item: any) => ({
         productId: item.productId,
-        quantity: item.pickedQuantity, // The new quantity picked by the separator
+        quantity: item.pickedQuantity, 
         price: item.price
       }));
 
@@ -67,7 +83,8 @@ export default function OrderPickingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           status: "READY_FOR_PICKUP",
-          items: updatedItems // This will trigger the order editing logic in the API
+          items: updatedItems,
+          notes: autoNote
         }),
       });
       

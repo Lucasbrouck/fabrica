@@ -71,6 +71,22 @@ export async function GET(
     const totalText = `TOTAL DO PEDIDO: R$ ${order.totalPrice.toFixed(2)}`;
     doc.text(totalText, pageWidth - 15, finalY + 15, { align: 'right' });
 
+    let currentY = finalY + 20;
+
+    if ((order as any).notes) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(200, 50, 50); // Cor de alerta
+      doc.text(`* NOTA DE SEPARAÇÃO (DIVERGÊNCIAS):`, 15, currentY);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text((order as any).notes, 15, currentY + 5);
+      currentY += 15; // Empurra os próximos itens para baixo
+    }
+
+    // Restabelecer cor preta para texto
+    doc.setTextColor(0, 0, 0);
+
     // QR Code for Signature
     const host = request.headers.get('host') || 'localhost:3000';
     const protocol = host.includes('localhost') ? 'http' : 'https';
@@ -80,14 +96,14 @@ export async function GET(
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('ASSINATURA DE RECEBIMENTO', 15, finalY + 30);
+    doc.text('ASSINATURA DE RECEBIMENTO', 15, currentY + 5);
     
-    doc.addImage(qrDataUrl, 'PNG', 15, finalY + 35, 40, 40);
+    doc.addImage(qrDataUrl, 'PNG', 15, currentY + 10, 40, 40);
     
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Escaneie o QR Code acima para confirmar', 15, finalY + 80);
-    doc.text('o recebimento e assinar digitalmente.', 15, finalY + 84);
+    doc.text('Escaneie o QR Code acima para confirmar', 15, currentY + 55);
+    doc.text('o recebimento e assinar digitalmente.', 15, currentY + 59);
 
     // Footer
     doc.setFontSize(8);
