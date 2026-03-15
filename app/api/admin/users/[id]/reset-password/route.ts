@@ -4,10 +4,10 @@ import bcrypt from "bcryptjs";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = params.id;
+    const { id: userId } = await params;
 
     if (!userId) {
       return NextResponse.json({ error: "ID do usuário é obrigatório" }, { status: 400 });
@@ -21,7 +21,7 @@ export async function POST(
       data: {
         password: hashedPassword,
         mustChangePassword: true,
-      },
+      } as any,
     });
 
     return NextResponse.json({ message: "Senha resetada com sucesso para '123456'" });
