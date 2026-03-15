@@ -5,32 +5,37 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  // Use raw SQL to ensure new fields are included even if Prisma client is outdated
-  const orders = await prisma.$queryRaw`
-    SELECT 
-      o.*,
-      u.name as "userName",
-      u.email as "userEmail"
-    FROM "Order" o
-    JOIN "User" u ON o."userId" = u.id
-    ORDER BY o."createdAt" DESC
-  `;
+  try {
+    // Use raw SQL to ensure new fields are included even if Prisma client is outdated
+    const orders = await prisma.$queryRaw`
+      SELECT 
+        o.*,
+        u.name as "userName",
+        u.email as "userEmail"
+      FROM "Order" o
+      JOIN "User" u ON o."userId" = u.id
+      ORDER BY o."createdAt" DESC
+    `;
 
-  // Fetch items separately for each order (simpler than complex raw join for nested items)
-  const ordersWithItems = await Promise.all((orders as any[]).map(async (order) => {
-    const items = await prisma.orderItem.findMany({
-      where: { orderId: order.id },
-      include: { product: true }
-    });
-    
-    return {
-      ...order,
-      user: { name: order.userName, email: order.userEmail },
-      items
-    };
-  }));
+    // Fetch items separately for each order (simpler than complex raw join for nested items)
+    const ordersWithItems = await Promise.all((orders as any[]).map(async (order) => {
+      const items = await prisma.orderItem.findMany({
+        where: { orderId: order.id },
+        include: { product: true }
+      });
+      
+      return {
+        ...order,
+        user: { name: order.userName, email: order.userEmail },
+        items
+      };
+    }));
 
-  return NextResponse.json(ordersWithItems);
+    return NextResponse.json(ordersWithItems);
+  } catch (error: any) {
+    console.error("GET Orders Error:", error);
+    return NextResponse.json({ error: 'Erro ao buscar pedidos', details: error.message }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

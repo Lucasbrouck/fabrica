@@ -170,7 +170,14 @@ export default function UserOrders() {
                     {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
                       <Button variant="secondary" size="sm" className="flex-1 text-xs font-bold">Editar Pedido</Button>
                     )}
-                    <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => router.push(`/user/sac?orderId=${order.id}`)}>Ajuda</Button>
+                    {(order.status !== 'DELIVERED' || (() => {
+                      if (!order.deliveredAt) return true;
+                      const deliveryDate = new Date(order.deliveredAt);
+                      const now = new Date();
+                      return now.getTime() - deliveryDate.getTime() <= 24 * 60 * 60 * 1000;
+                    })()) && (
+                      <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => router.push(`/user/sac?orderId=${order.id}`)}>Ajuda</Button>
+                    )}
                   </div>
                 </div>
               </div>

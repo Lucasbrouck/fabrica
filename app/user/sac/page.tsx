@@ -211,7 +211,7 @@ function UserSAC() {
       <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center shadow-sm">
         <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">SAC e Suporte</h1>
         {!isCreating && (
-          <Button onClick={() => setIsCreating(true)} size="sm" className="rounded-xl px-4 py-2 bg-blue-600 text-white font-bold h-auto shadow-md">
+          <Button onClick={() => { setIsCreating(true); setSupportType("GENERAL"); setStep(10); setReason("Problema com Item (Lote)"); }} size="sm" className="rounded-xl px-4 py-2 bg-blue-600 text-white font-bold h-auto shadow-md">
             <Plus size={18} className="mr-1" /> Novo
           </Button>
         )}
@@ -258,25 +258,24 @@ function UserSAC() {
                    <div className="space-y-5">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Informar Lote do item</p>
                       <div className="space-y-2">
-                         <input 
-                            type="text" 
-                            placeholder="Número do Lote..." 
-                            value={lote}
-                            onChange={(e) => setLote(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-300"
-                         />
+                         <div className="relative">
+                            <input 
+                               type="text" 
+                               placeholder="Número do Lote..." 
+                               value={lote}
+                               onChange={(e) => setLote(e.target.value)}
+                               className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 pr-14 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-300"
+                            />
+                            <button
+                               type="button"
+                               onClick={() => setIsScanning(true)}
+                               className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-100 hover:scale-105 active:scale-95 transition-all shadow-sm"
+                            >
+                               <Camera size={18} />
+                            </button>
+                         </div>
                          <p className="text-[9px] text-slate-400 px-2">Código impresso na embalagem do item.</p>
                       </div>
-
-                      <Button 
-                         type="button" 
-                         variant="secondary" 
-                         onClick={() => setIsScanning(true)}
-                         className="w-full py-6 flex items-center justify-center gap-2 border-dashed border-2 hover:border-blue-400 hover:text-blue-600"
-                      >
-                         <Camera size={18} /> 
-                         <span>Escanear Código de Barras / QR</span>
-                      </Button>
 
                       {isScanning && (
                          <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-6 space-y-4">
@@ -292,7 +291,7 @@ function UserSAC() {
                       )}
 
                       <div className="flex gap-3 pt-2">
-                         <Button type="button" variant="secondary" className="flex-1 py-6" onClick={() => setStep(0)}>Voltar</Button>
+                         <Button type="button" variant="secondary" className="flex-1 py-6" onClick={() => setIsCreating(false)}>Voltar</Button>
                          <Button type="button" className="flex-[2] py-6 bg-blue-600 text-white font-bold" disabled={!lote} onClick={() => setStep(5)}>Próximo</Button>
                       </div>
                    </div>
@@ -542,7 +541,7 @@ function UserSAC() {
                   <p className="font-bold text-slate-800">Nenhum chamado ainda</p>
                   <p className="text-xs text-slate-500 px-4">Quando precisar de ajuda, clique no botão "Novo" ou use o suporte direto nos pedidos.</p>
                 </div>
-                <Button onClick={() => setIsCreating(true)} variant="primary" className="h-auto py-3 px-6 text-xs uppercase font-bold tracking-widest">
+                <Button onClick={() => { setIsCreating(true); setSupportType("GENERAL"); setStep(10); setReason("Problema com Item (Lote)"); }} variant="primary" className="h-auto py-3 px-6 text-xs uppercase font-bold tracking-widest">
                   Abrir Primeiro Chamado
                 </Button>
               </div>

@@ -94,6 +94,7 @@ model Order {
   signature   String?     // Base64 signature
   receiverName String?    // Nome de quem recebeu
   notes        String?    // Observações de divergência
+  deliveredAt  DateTime?  // Data de entrega
   
   // Asaas Payment Info
   asaasPaymentId      String?

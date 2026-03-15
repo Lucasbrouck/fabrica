@@ -21,6 +21,7 @@ export async function POST(
         signature,
         receiverName: receiverName || null,
         status: 'DELIVERED',
+        deliveredAt: new Date(),
       } as any,
     });
 

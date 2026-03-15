@@ -50,7 +50,8 @@ export async function PATCH(
         where: { id: orderId },
         data: { 
           status: status as OrderStatus,
-          notes: notes !== undefined ? notes : undefined
+          notes: notes !== undefined ? notes : undefined,
+          deliveredAt: status === 'DELIVERED' ? new Date() : undefined
         } as any,
       });
       return NextResponse.json(order);
@@ -72,6 +73,7 @@ export async function PATCH(
           totalPrice: newTotal,
           status: status as OrderStatus || undefined,
           notes: notes !== undefined ? notes : undefined,
+          deliveredAt: status === 'DELIVERED' ? new Date() : undefined,
           items: {
             create: items.map((item: any) => ({
               productId: item.productId,
