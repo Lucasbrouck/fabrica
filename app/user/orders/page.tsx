@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui-button";
 import { Clock, CheckCircle2, Package, Search, Filter, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 
 export default function UserOrders() {
+  const router = useRouter();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -168,7 +170,7 @@ export default function UserOrders() {
                     {(order.status === 'PLACED' || order.status === 'CONFIRMED') && (
                       <Button variant="secondary" size="sm" className="flex-1 text-xs font-bold">Editar Pedido</Button>
                     )}
-                    <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => setHelpOrder(order)}>Ajuda</Button>
+                    <Button variant="ghost" size="sm" className="flex-1 text-xs" onClick={() => router.push(`/user/sac?orderId=${order.id}`)}>Ajuda</Button>
                   </div>
                 </div>
               </div>
