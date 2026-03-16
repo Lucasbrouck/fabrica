@@ -76,7 +76,8 @@ export async function POST(
       customerAsaasId!,
       order.totalPrice,
       `Pedido #${(order as any).displayId} - PDV Fábrica`,
-      order.user.boletoDueDays || 28
+      order.user.boletoDueDays || 28,
+      orderId
     );
 
     // 2.5 Fetch full payment to extract bankSlipUrl

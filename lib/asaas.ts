@@ -61,7 +61,7 @@ export async function createAsaasCustomer(user: {
   return data;
 }
 
-export async function createAsaasPayment(customerId: string, value: number, description: string, dueDays: number = 28) {
+export async function createAsaasPayment(customerId: string, value: number, description: string, dueDays: number = 28, externalReference?: string) {
   const url = `${ASAAS_API_URL}/lean/payments`;
   const key = getApiKey();
 
@@ -80,6 +80,7 @@ export async function createAsaasPayment(customerId: string, value: number, desc
       value: value,
       dueDate: new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       description: description,
+      externalReference: externalReference
     })
   };
 
