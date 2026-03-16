@@ -28,7 +28,32 @@ export async function GET(
       return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
-    return NextResponse.json(order);
+    // Hack para Windows: busca barcodes e pickedQuantity via SQL puro para evitar travas de tipo Prisma
+    const [barcodes, pickedQuantities] = await Promise.all([
+      prisma.$queryRawUnsafe<any[]>(`SELECT "id", "barcode" FROM "Product"`),
+      prisma.$queryRaw<any[]>`SELECT "id", "pickedQuantity" FROM "OrderItem" WHERE "orderId" = ${orderId}`
+    ]);
+
+    const formattedItems = order.items.map((item: any) => {
+      const b = barcodes.find((b: any) => b.id === item.productId);
+      const pq = pickedQuantities.find((p: any) => p.id === item.id);
+      
+      return {
+        ...item,
+        pickedQuantity: pq ? (pq.pickedQuantity || 0) : 0,
+        product: item.product ? {
+          ...item.product,
+          barcode: b ? b.barcode : null
+        } : null
+      };
+    });
+
+    const formattedOrder = {
+      ...order,
+      items: formattedItems
+    };
+
+    return NextResponse.json(formattedOrder);
   } catch (error: any) {
     console.error("Get Order Error:", error);
     return NextResponse.json({ error: 'Erro ao buscar pedido', details: error.message }, { status: 500 });

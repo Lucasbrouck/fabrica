@@ -19,10 +19,10 @@ export default function OrderPickingPage() {
     const res = await fetch(`/api/orders/${id}`);
     const data = await res.json();
     
-    // Initialize pickedQuantity with quantity if it hasn't been picked yet
+    // Initialize pickedQuantity with 0 if it hasn't been picked yet
     const initializedItems = data.items.map((item: any) => ({
       ...item,
-      pickedQuantity: item.pickedQuantity || item.quantity
+      pickedQuantity: item.pickedQuantity || 0
     }));
     
     setOrder({ ...data, items: initializedItems });

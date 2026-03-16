@@ -26,7 +26,8 @@ export default function AdminProducts() {
   const [productFormData, setProductFormData] = useState({
     name: "",
     price: "",
-    categoryId: ""
+    categoryId: "",
+    barcode: ""
   });
 
   const fetchData = async () => {
@@ -57,7 +58,7 @@ export default function AdminProducts() {
   const handleOpenProductCreate = () => {
     setProductModalMode('create');
     setEditingProduct(null);
-    setProductFormData({ name: "", price: "", categoryId: categories[0]?.id || "" });
+    setProductFormData({ name: "", price: "", categoryId: categories[0]?.id || "", barcode: "" });
     setError("");
     setProductModalOpen(true);
   };
@@ -68,7 +69,8 @@ export default function AdminProducts() {
     setProductFormData({
       name: product.name,
       price: product.price.toString(),
-      categoryId: product.categoryId
+      categoryId: product.categoryId,
+      barcode: product.barcode || ""
     });
     setError("");
     setProductModalOpen(true);
@@ -305,6 +307,17 @@ export default function AdminProducts() {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Código / Prefixo (Opcional)</label>
+                  <input 
+                    type="text" 
+                    value={productFormData.barcode || ""}
+                    onChange={(e) => setProductFormData({ ...productFormData, barcode: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-slate-700 uppercase"
+                    placeholder="Ex: FJ"
+                  />
                 </div>
 
                 {error && (

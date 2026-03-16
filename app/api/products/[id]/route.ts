@@ -8,15 +8,15 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, price, categoryId } = body;
-
+    const { name, price, categoryId, barcode } = body;
     const product = await prisma.product.update({
       where: { id },
       data: {
         name,
         price: parseFloat(price),
         categoryId,
-      },
+        barcode: barcode && barcode.trim() !== "" ? barcode.trim() : null,
+      } as any,
     });
 
     return NextResponse.json(product);
