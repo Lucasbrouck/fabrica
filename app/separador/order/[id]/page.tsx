@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Plus, Minus, CheckCircle, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui-button";
+import { motion } from "framer-motion";
 import { formatPrice } from "@/lib/utils";
 
 export default function OrderPickingPage() {
@@ -12,6 +13,7 @@ export default function OrderPickingPage() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   const fetchOrder = async () => {
     const res = await fetch(`/api/orders/${id}`);
@@ -127,7 +129,11 @@ export default function OrderPickingPage() {
           return (
             <div 
               key={item.id}
-              className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm"
+              className={`p-5 rounded-[2rem] border-2 shadow-sm transition-all ${
+                checkedItems[item.id] 
+                  ? "bg-emerald-50/50 border-emerald-200/80 shadow-emerald-100/10" 
+                  : "bg-white border-slate-100"
+              }`}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1 pr-4">
@@ -139,8 +145,9 @@ export default function OrderPickingPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
                   <button 
+                    disabled={checkedItems[item.id]}
                     onClick={() => item.pickedQuantity > 0 && updateItemPickedQuantity(item.id, item.pickedQuantity - 1)}
-                    className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+                    className={`w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 active:scale-95 transition-all shadow-sm ${checkedItems[item.id] ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50"}`}
                   >
                     <Minus size={20} />
                   </button>
@@ -148,8 +155,9 @@ export default function OrderPickingPage() {
                     {item.pickedQuantity}
                   </span>
                   <button 
+                    disabled={checkedItems[item.id]}
                     onClick={() => updateItemPickedQuantity(item.id, item.pickedQuantity + 1)}
-                    className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-100"
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-white active:scale-95 transition-all shadow-lg ${checkedItems[item.id] ? "bg-indigo-300 opacity-50 cursor-not-allowed shadow-none" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100"}`}
                   >
                     <Plus size={20} />
                   </button>
@@ -157,10 +165,15 @@ export default function OrderPickingPage() {
                 
                 <div className="flex items-center gap-2">
                    <button 
-                    disabled
-                    className="px-4 py-3 rounded-xl font-bold text-xs uppercase bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-2"
+                    type="button"
+                    onClick={() => setCheckedItems(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                    className={`px-4 py-3 rounded-xl font-bold text-xs uppercase flex items-center gap-2 transition-all ${
+                      checkedItems[item.id] 
+                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                        : "bg-white border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300"
+                    }`}
                   >
-                    <CheckCircle size={14} /> OK
+                    <CheckCircle size={14} className={checkedItems[item.id] ? "text-emerald-600" : "text-slate-400"} /> OK
                   </button>
                 </div>
               </div>

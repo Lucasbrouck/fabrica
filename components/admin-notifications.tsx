@@ -96,7 +96,7 @@ export function AdminNotifications() {
 
               <button 
                 onClick={() => {
-                  window.location.href = "/admin/dashboard";
+                  window.location.href = "/admin/orders";
                   setNewOrder(null);
                 }}
                 className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95"

@@ -195,17 +195,6 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-        <input 
-          type="text" 
-          placeholder="Buscar produtos..." 
-          className="w-full pl-12 pr-4 py-3 rounded-2xl glass border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-bold text-slate-700 text-sm"
-        />
-      </div>
-      </div>
-
       <div className="glass-card !p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {loading ? (

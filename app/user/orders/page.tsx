@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui-button";
-import { Clock, CheckCircle2, Package, Search, Filter, ChevronDown } from "lucide-react";
+import { Clock, CheckCircle2, Package, Search, Filter, ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 
@@ -79,6 +79,15 @@ export default function UserOrders() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center shadow-sm">
         <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">Meus Pedidos</h1>
+        <button 
+           onClick={async () => {
+              await fetch("/api/auth/logout", { method: "POST" });
+              router.push("/");
+           }}
+           className="p-2 bg-slate-50 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-500 transition-all flex items-center gap-1"
+        >
+           <LogOut size={20} /> <span className="text-xs font-bold font-sans">Sair</span>
+        </button>
       </header>
 
       <main className="max-w-xl mx-auto p-6 space-y-8">

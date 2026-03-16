@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Camera, Send, MessageCircle, AlertCircle, CheckCircle2, Loader2, ChevronRight, X, Plus, Minus, Package, Clock } from "lucide-react";
+import { Camera, Send, MessageCircle, AlertCircle, CheckCircle2, Loader2, ChevronRight, X, Plus, Minus, Package, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui-button";
 
 function UserSAC() {
@@ -210,11 +210,22 @@ function UserSAC() {
     <div className="min-h-screen bg-slate-50 pb-24">
       <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center shadow-sm">
         <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">SAC e Suporte</h1>
-        {!isCreating && (
-          <Button onClick={() => { setIsCreating(true); setSupportType("GENERAL"); setStep(10); setReason("Problema com Item (Lote)"); }} size="sm" className="rounded-xl px-4 py-2 bg-blue-600 text-white font-bold h-auto shadow-md">
-            <Plus size={18} className="mr-1" /> Novo
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <button 
+             onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                router.push("/");
+             }}
+             className="p-2 bg-slate-50 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-500 transition-all flex items-center gap-1"
+          >
+             <LogOut size={20} /> <span className="text-xs font-bold font-sans">Sair</span>
+          </button>
+          {!isCreating && (
+            <Button onClick={() => { setIsCreating(true); setSupportType("GENERAL"); setStep(10); setReason("Problema com Item (Lote)"); }} size="sm" className="rounded-xl px-4 py-2 bg-blue-600 text-white font-bold h-auto shadow-md">
+              <Plus size={18} className="mr-1" /> Novo
+            </Button>
+          )}
+        </div>
       </header>
 
       <main className="max-w-xl mx-auto p-6 space-y-6">

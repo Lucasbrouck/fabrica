@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
         
         switch (role) {
           case "ADMIN":
-            return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+            return NextResponse.redirect(new URL("/admin/orders", request.url));
           case "GESTOR":
             return NextResponse.redirect(new URL("/gestor", request.url));
           case "SEPARADOR":

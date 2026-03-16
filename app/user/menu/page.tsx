@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui-button";
-import { ShoppingBasket, Search, Plus, Minus, X } from "lucide-react";
+import { ShoppingBasket, Search, Plus, Minus, X, LogOut } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
 export default function UserMenu() {
@@ -94,14 +94,26 @@ export default function UserMenu() {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-6 py-3 flex justify-between items-center shadow-sm">
         <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">Produtos</h1>
-        <button onClick={() => setShowCart(true)} className="relative p-2 text-slate-600 hover:text-blue-600 transition-colors bg-slate-50 rounded-xl">
-          <ShoppingBasket size={24} />
+        <div className="flex items-center gap-2">
+          <button 
+             onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/";
+             }}
+             className="p-2 bg-slate-50 hover:bg-red-50 rounded-xl text-slate-400 hover:text-red-500 transition-all flex items-center gap-1"
+          >
+             <LogOut size={20} /> <span className="text-xs font-bold font-sans">Sair</span>
+          </button>
+          
+          <button onClick={() => setShowCart(true)} className="relative p-2 text-slate-600 hover:text-blue-600 transition-colors bg-slate-50 rounded-xl">
+            <ShoppingBasket size={24} />
           {cart.length > 0 && (
             <span className="absolute top-0 right-0 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
               {cart.reduce((s, i) => s + i.quantity, 0)}
             </span>
           )}
         </button>
+        </div>
       </header>
 
       <main className="max-w-xl mx-auto p-6 space-y-8">

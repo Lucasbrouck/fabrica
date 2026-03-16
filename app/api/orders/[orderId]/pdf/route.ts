@@ -113,10 +113,23 @@ export async function GET(
     const pdfBuffer = doc.output('arraybuffer');
     let finalPdfBuffer: any = pdfBuffer;
 
-    if (order.asaasPaymentUrl && order.asaasPaymentUrl.startsWith('http')) {
+    if (order.asaasPaymentId) {
       try {
-        console.log(`[PDF Merge] Fetching boleto from: ${order.asaasPaymentUrl}`);
-        const boletoRes = await fetch(order.asaasPaymentUrl);
+        let key = process.env.ASAAS_API_KEY;
+        if (key && !key.startsWith('$')) {
+          key = `$${key}`;
+        }
+
+        const apiURL = "https://api.asaas.com/v3"; 
+        const boletoUrl = `${apiURL}/payments/${order.asaasPaymentId}/bankSlip`;
+        
+        console.log(`[PDF Merge] Fetching boleto PDF for ID: ${order.asaasPaymentId}`);
+        const boletoRes = await fetch(boletoUrl, {
+           headers: {
+             'access_token': key || ''
+           }
+        });
+
         if (boletoRes.ok) {
           const boletoBuffer = await boletoRes.arrayBuffer();
 

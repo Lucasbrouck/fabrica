@@ -10,6 +10,10 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  const [isFirstAccess, setIsFirstAccess] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -32,7 +36,7 @@ export default function Home() {
 
       // Redireciona com base no papel do usuário
       if (data.user.role === "ADMIN") {
-        router.push("/admin/dashboard");
+        router.push("/admin/orders");
       } else if (data.user.role === "GESTOR") {
         router.push("/gestor");
       } else if (data.user.role === "SEPARADOR") {
@@ -43,6 +47,54 @@ export default function Home() {
         // Redirecionamento padrão (fallback)
         router.push("/");
       }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFirstAccessCheck = async () => {
+    if (!email) {
+      setError("Preencha o e-mail para validar primeiro acesso.");
+      return;
+    }
+    setIsLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/auth/first-access?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao validar primeiro acesso");
+      
+      setIsFirstAccess(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFirstAccessSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+    setIsLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/auth/first-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro ao criar senha");
+      
+      if (data.user.role === "ADMIN") router.push("/admin/orders");
+      else if (data.user.role === "GESTOR") router.push("/gestor");
+      else if (data.user.role === "SEPARADOR") router.push("/separador");
+      else router.push("/user");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -68,7 +120,7 @@ export default function Home() {
         </div>
 
         <div className="glass-card p-8 border-white/50 shadow-2xl shadow-slate-200/50">
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={isFirstAccess ? handleFirstAccessSubmit : handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700 ml-1">E-mail</label>
               <div className="relative group">
@@ -82,26 +134,65 @@ export default function Home() {
                   className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
                   placeholder="Seu e-mail..."
                   required
+                  readOnly={isFirstAccess}
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                  <Lock size={20} />
+            {!isFirstAccess ? (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <Lock size={20} />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                    placeholder="••••••••"
+                    required
+                  />
                 </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
-                  placeholder="••••••••"
-                  required
-                />
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 ml-1">Nova Senha</label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                      <Lock size={20} />
+                    </div>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                      placeholder="Nova senha (min. 6 caracteres)"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 ml-1">Confirmar Senha</label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                      <Lock size={20} />
+                    </div>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                      placeholder="Repita a nova senha..."
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 text-red-600 border border-red-100 animate-in fade-in slide-in-from-top-2">
@@ -119,12 +210,34 @@ export default function Home() {
               {isLoading ? (
                 <>
                   <Loader2 className="animate-spin mr-2" size={20} />
-                  Entrando...
+                  {isFirstAccess ? "Criando Senha..." : "Entrando..."}
                 </>
               ) : (
-                "Acessar Sistema"
+                isFirstAccess ? "Criar Senha e Entrar" : "Acessar Sistema"
               )}
             </Button>
+
+            {!isFirstAccess ? (
+              <div className="text-center mt-4">
+                <button 
+                  type="button" 
+                  onClick={handleFirstAccessCheck} 
+                  className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Primeiro Acesso?
+                </button>
+              </div>
+            ) : (
+              <div className="text-center mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsFirstAccess(false)} 
+                  className="text-sm font-bold text-slate-500 hover:text-slate-600 transition-colors"
+                >
+                  Voltar ao Login
+                </button>
+              </div>
+            )}
           </form>
         </div>
       </div>
