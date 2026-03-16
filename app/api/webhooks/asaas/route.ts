@@ -31,7 +31,7 @@ export async function POST(request: Request) {
      } else if (event === "PAYMENT_OVERDUE") {
         statusToUpdate = "OVERDUE";
      } else if (event === "PAYMENT_DELETED") {
-        statusToUpdate = "DELETED";
+        statusToUpdate = "CANCELLED";
      } else if (event === "PAYMENT_UPDATED") {
         statusToUpdate = payment.status; // Ex: PENDING, OVERDUE, RECEIVED
      }
@@ -44,11 +44,18 @@ export async function POST(request: Request) {
            return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
         }
 
+        const dataToUpdate: any = { asaasPaymentStatus: statusToUpdate };
+        
+        // Atualizar data de vencimento se fornecida
+        if (payment.dueDate) {
+           dataToUpdate.asaasPaymentDueDate = payment.dueDate;
+        }
+
         await prisma.order.update({
            where: { id: orderId },
-           data: { asaasPaymentStatus: statusToUpdate }
+           data: dataToUpdate
         });
-        console.log(`[Asaas Webhook] Pedido ${orderId} atualizado para status de cobrança: ${statusToUpdate}`);
+        console.log(`[Asaas Webhook] Pedido ${orderId} atualizado para status: ${statusToUpdate}${payment.dueDate ? ` e vencimento: ${payment.dueDate}` : ''}`);
      }
 
      return NextResponse.json({ success: true, received: true });

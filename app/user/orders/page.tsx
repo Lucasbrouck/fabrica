@@ -142,11 +142,14 @@ export default function UserOrders() {
                             order.asaasPaymentStatus === 'RECEIVED' || order.asaasPaymentStatus === 'RECEIVED_IN_CASH' || order.asaasPaymentStatus === 'CONFIRMED' 
                               ? 'bg-emerald-100 text-emerald-700' 
                               : order.asaasPaymentStatus === 'OVERDUE' 
-                                ? 'bg-red-100 text-red-700' 
-                                : 'bg-blue-100 text-blue-700'
+                                ? 'bg-amber-100 text-amber-700' 
+                                : order.asaasPaymentStatus === 'CANCELLED'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-blue-100 text-blue-700'
                           }`}>
                             {order.asaasPaymentStatus === 'RECEIVED' || order.asaasPaymentStatus === 'RECEIVED_IN_CASH' || order.asaasPaymentStatus === 'CONFIRMED' ? 'Pago' :
                              order.asaasPaymentStatus === 'OVERDUE' ? 'Vencido' :
+                             order.asaasPaymentStatus === 'CANCELLED' ? 'Cancelado' :
                              order.asaasPaymentStatus === 'PENDING' ? 'Pendente' : 'Gerada'}
                           </span>
                         </div>

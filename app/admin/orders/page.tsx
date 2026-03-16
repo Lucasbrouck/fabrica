@@ -320,11 +320,15 @@ export default function AdminOrders() {
                         <span className={cn(
                           "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider",
                           order.asaasPaymentStatus === "CONFIRMED" || order.asaasPaymentStatus === "RECEIVED" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
-                          order.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600 border border-red-100" : 
+                          order.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600 border border-red-100" :
+                          order.asaasPaymentStatus === "CANCELLED" ? "bg-red-50 text-red-600 border border-red-100" : 
+                          order.asaasPaymentStatus === "CANCELLED" ? "bg-red-50 text-red-600 border border-red-100" :
                           order.asaasPaymentStatus === "PENDING" ? "bg-amber-50 text-amber-600 border border-amber-100" : "bg-slate-50 text-slate-500 border border-slate-100"
                         )}>
                           {order.asaasPaymentStatus === "CONFIRMED" || order.asaasPaymentStatus === "RECEIVED" ? "PAGO" :
                            order.asaasPaymentStatus === "OVERDUE" ? "VENCIDO" :
+                           order.asaasPaymentStatus === "CANCELLED" ? "CANCELADO" :
+                           order.asaasPaymentStatus === "CANCELLED" ? "CANCELADO" :
                            order.asaasPaymentStatus === "PENDING" ? "PENDENTE" : "AGUARDANDO"}
                         </span>
                       </div>
@@ -656,7 +660,8 @@ export default function AdminOrders() {
                            <span className={cn(
                              "px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
                              selectedOrder.asaasPaymentStatus === "CONFIRMED" || selectedOrder.asaasPaymentStatus === "RECEIVED" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
-                             selectedOrder.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600 border border-red-100" : "bg-amber-50 text-amber-600 border border-amber-100"
+                             selectedOrder.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600 border border-red-100" : 
+                             selectedOrder.asaasPaymentStatus === "CANCELLED" ? "bg-red-50 text-red-600 border border-red-100" : "bg-amber-50 text-amber-600 border border-amber-100"
                            )}>
                              {selectedOrder.asaasPaymentStatus || "AGUARDANDO GERAÇÃO"}
                            </span>
