@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, MessageCircle, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Package, Users, ShoppingCart, LogOut, MessageCircle, ClipboardList, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -14,9 +15,33 @@ const menuItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <aside className="hidden lg:flex fixed left-4 top-4 bottom-4 w-64 glass rounded-2xl p-6 flex-col gap-8 z-50">
+    <>
+      {/* Botão Sanduíche para Mobile */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden fixed top-6 right-6 z-[60] p-3 bg-white rounded-2xl border border-slate-200 shadow-md text-slate-600 active:scale-95 transition-all flex items-center justify-center"
+        title="Menu"
+      >
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Overlay Background para Mobile */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)} 
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm lg:hidden z-40 animate-in fade-in"
+        />
+      )}
+
+      {/* Sidebar de Navegação */}
+      <aside className={cn(
+        "fixed left-4 top-4 bottom-4 w-64 glass rounded-2xl p-6 flex flex-col gap-8 z-50 transition-all duration-300",
+        "lg:translate-x-0",
+        isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-[110%] lg:translate-x-0"
+      )}>
       <div className="flex items-center gap-3 px-2">
         <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
           P
@@ -31,6 +56,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setIsOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
                 isActive 
@@ -60,6 +86,7 @@ export function AdminSidebar() {
         <LogOut size={20} />
         Sair
       </button>
-    </aside>
+      </aside>
+    </>
   );
 }
