@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createAsaasCustomer, createAsaasPayment, getAsaasPayment } from '@/lib/asaas';
+import { appendRowToSheet } from '@/lib/google-sheets';
 
 export async function POST(
   request: Request,
@@ -103,6 +104,16 @@ export async function POST(
       console.error("[Asaas] Error updating order with raw SQL:", dbError);
       // Fallback: Continue without saving back to DB to not block the user receipt
     }
+
+    // 4. Registrar no Google Sheets (Sem travar o fluxo principal)
+    await appendRowToSheet({
+      orderId: (order as any).displayId || orderId,
+      customerName: order.user.name,
+      totalPrice: order.totalPrice,
+      paymentUrl: fullPayment.bankSlipUrl || payment.invoiceUrl || '',
+      dueDate: payment.dueDate,
+      status: payment.status || 'PENDING'
+    });
 
     return NextResponse.json({ 
       paymentUrl: fullPayment.bankSlipUrl || payment.invoiceUrl, 

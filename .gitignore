@@ -53,3 +53,6 @@ next-env.d.ts
 /scripts/clear-orders.ts
 /temp-prisma/
 /ptest/
+
+# Google Sheets Credentials
+fabrica-490519-*.json
