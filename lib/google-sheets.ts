@@ -47,12 +47,11 @@ export async function appendRowToSheet(data: AppendRowParams) {
         privateKey = privateKey.replace(/\\o/g, '\\n').replace(/\\ /g, '\\n').replace(/\\n/g, '\n').trim();
       }
 
-      auth = new google.auth.JWT(
-        clientEmail,
-        undefined,
-        privateKey,
-        ['https://www.googleapis.com/auth/spreadsheets']
-      );
+      auth = new google.auth.JWT({
+        email: clientEmail,
+        key: privateKey,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets']
+      });
     }
 
     const sheets = google.sheets({ version: 'v4', auth });
