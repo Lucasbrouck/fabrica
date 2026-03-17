@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { PDFDocument } from 'pdf-lib';
+import { createPaymentForOrder } from '@/lib/order-payment';
 
 export async function GET(
   request: Request,
@@ -113,7 +114,19 @@ export async function GET(
     const pdfBuffer = doc.output('arraybuffer');
     let finalPdfBuffer: any = pdfBuffer;
 
-    if (order.asaasPaymentId) {
+    let asaasPaymentId = order.asaasPaymentId;
+    if (!asaasPaymentId) {
+      console.log(`[PDF] Order #${order.displayId} has no asaasPaymentId. Generating payment on the fly...`);
+      try {
+        const result = await createPaymentForOrder(orderId);
+        asaasPaymentId = result.paymentId;
+        (order as any).asaasPaymentId = asaasPaymentId;
+      } catch (err) {
+        console.error("[PDF] Failed to create payment on the fly:", err);
+      }
+    }
+
+    if (asaasPaymentId) {
       try {
         let key = process.env.ASAAS_API_KEY;
         if (key && !key.startsWith('$')) {
