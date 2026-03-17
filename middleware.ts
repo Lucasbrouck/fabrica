@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === "/" ||
     pathname.includes("/api/auth") ||
+    pathname.startsWith("/receipt") ||
     pathname.includes("/_next") ||
     pathname.includes("/favicon.ico") ||
     pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|json|txt)$/)
