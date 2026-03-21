@@ -1,0 +1,24 @@
+
+> pdv-fabrica-pos@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 59s
+  Running TypeScript ...
+Failed to compile.
+
+./scripts/test-sheets.ts:23:7
+Type error: Expected 0-1 arguments, but got 4.
+
+[0m [90m 21 |[39m     [36mconst[39m auth [33m=[39m [36mnew[39m google[33m.[39mauth[33m.[39m[33mJWT[39m(
+ [90m 22 |[39m       email[33m,[39m
+[31m[1m>[22m[39m[90m 23 |[39m       undefined[33m,[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 24 |[39m       key[33m,[39m
+ [90m 25 |[39m       [[32m'https://www.googleapis.com/auth/spreadsheets'[39m]
+ [90m 26 |[39m     )[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

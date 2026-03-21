@@ -1,0 +1,68 @@
+
+> pdv-fabrica-pos@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 55s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/28) ...
+  Generating static pages using 11 workers (7/28) 
+  Generating static pages using 11 workers (14/28) 
+  Generating static pages using 11 workers (21/28) 
+✓ Generating static pages using 11 workers (28/28) in 7.5s
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /admin/dashboard
+├ ○ /admin/orders
+├ ○ /admin/products
+├ ○ /admin/sac
+├ ○ /admin/users
+├ ƒ /api/admin/users
+├ ƒ /api/admin/users/[id]
+├ ƒ /api/admin/users/[id]/reset-password
+├ ƒ /api/auth/change-password
+├ ƒ /api/auth/first-access
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/me
+├ ƒ /api/auth/register
+├ ƒ /api/categories
+├ ƒ /api/categories/[id]
+├ ƒ /api/orders
+├ ƒ /api/orders/[orderId]
+├ ƒ /api/orders/[orderId]/items/[itemId]
+├ ƒ /api/orders/[orderId]/payment
+├ ƒ /api/orders/[orderId]/pdf
+├ ƒ /api/orders/[orderId]/receipt
+├ ƒ /api/products
+├ ƒ /api/products/[id]
+├ ƒ /api/tickets
+├ ƒ /api/tickets/[ticketId]
+├ ƒ /api/webhooks/asaas
+├ ○ /change-password
+├ ○ /gestor
+├ ƒ /receipt/[orderId]
+├ ○ /separador
+├ ƒ /separador/order/[id]
+├ ƒ /separador/order/[id]/scan
+├ ○ /user
+├ ○ /user/menu
+├ ○ /user/orders
+├ ○ /user/register
+└ ○ /user/sac
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

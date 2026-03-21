@@ -18,12 +18,11 @@ async function debugExactAuth() {
 
   try {
     const { google } = await import("googleapis");
-    const auth = new google.auth.JWT(
-      email,
-      undefined,
-      key,
-      ['https://www.googleapis.com/auth/spreadsheets']
-    );
+    const auth = new google.auth.JWT({
+      email: email,
+      key: key,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
 
     console.log("Solicitando token...");
     await auth.getAccessToken();

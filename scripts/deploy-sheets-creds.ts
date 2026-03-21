@@ -39,10 +39,9 @@ async function deployCreds() {
   
   if (envContent.includes("GOOGLE_PRIVATE_KEY=")) {
     // Regex para substituir a linha toda da chave privada (pode ser longa)
-    envContent = envContent.replace(/GOOGLE_PRIVATE_KEY=.*(\r?\n|$)/s, `GOOGLE_PRIVATE_KEY="${privateKey}"\n`);
-    // Se o regex acima falhar com chaves muito longas devido a quebras, podemos usar index
+    envContent = envContent.replace(/GOOGLE_PRIVATE_KEY=.*(\r?\n|$)/, `GOOGLE_PRIVATE_KEY="${escapedKey}"\n`);
   } else {
-    envContent += `\nGOOGLE_PRIVATE_KEY="${privateKey}"`;
+    envContent += `\nGOOGLE_PRIVATE_KEY="${escapedKey}"`;
   }
 
   fs.writeFileSync(envPath, envContent);
