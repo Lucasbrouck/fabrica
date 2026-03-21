@@ -8,7 +8,9 @@ async function debugExactAuth() {
   let key = process.env.GOOGLE_PRIVATE_KEY;
 
   if (key) {
-    if (key.startsWith('"') && key.endsWith('"')) {
+    key = key.trim();
+    if ((key.startsWith('"') && key.endsWith('"')) || 
+        (key.startsWith("'") && key.endsWith("'"))) {
       key = key.substring(1, key.length - 1);
     }
     key = key.replace(/\\o/g, '\\n');

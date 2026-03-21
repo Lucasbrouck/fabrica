@@ -55,7 +55,9 @@ export async function appendRowToSheet(data: AppendRowParams) {
       log("[Google Sheets] Chave raw len: " + privateKey.length);
 
       if (privateKey) {
-        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.trim();
+        if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || 
+            (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
           privateKey = privateKey.substring(1, privateKey.length - 1);
         }
         // Corrige os \o e \  (barra + espaço) que costumam vir de erros de digitação/cópia
