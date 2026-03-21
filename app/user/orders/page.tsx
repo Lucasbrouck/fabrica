@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui-button";
 import { Clock, CheckCircle2, Package, Search, Filter, ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -11,8 +11,12 @@ export default function UserOrders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [observerTarget, setObserverTarget] = useState<HTMLDivElement | null>(null);
 
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
   const toggleExpand = (id: string) => {
     setExpandedOrders(prev => ({ ...prev, [id]: !prev[id] }));
   };
@@ -20,15 +24,7 @@ export default function UserOrders() {
   const [helpOrder, setHelpOrder] = useState<any | null>(null);
   const [helpReason, setHelpReason] = useState("Item a menos");
   const [helpSubmitting, setHelpSubmitting] = useState(false);
-
   const [user, setUser] = useState<any>(null);
-
-  const fetchOrders = async () => {
-    const res = await fetch("/api/orders");
-    const data = await res.json();
-    setOrders(data);
-    setLoading(false);
-  };
 
   const submitHelpTicket = async () => {
     if (!helpOrder || (!user && !helpOrder.userId)) return;
@@ -54,12 +50,67 @@ export default function UserOrders() {
     }
   };
 
+  const fetchOrders = async (isLoadMore = false, isRefresh = false, refreshLength = 0) => {
+    if (isLoadMore && loadingMore) return;
+    if (isLoadMore) setLoadingMore(true);
+
+    try {
+      const currentLimit = isLoadMore ? 3 : (isRefresh && refreshLength > 0 ? refreshLength : 10);
+      const currentOffset = isLoadMore ? offset : 0;
+
+      const res = await fetch(`/api/orders?limit=${currentLimit}&offset=${currentOffset}`);
+      const data = await res.json();
+
+      if (isLoadMore) {
+        setOrders(prev => [...prev, ...data]);
+        setOffset(prev => prev + data.length);
+        if (data.length < currentLimit) setHasMore(false);
+      } else {
+        setOrders(data);
+        if (!isRefresh) {
+            setOffset(data.length);
+            setHasMore(data.length === currentLimit);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (isLoadMore) setLoadingMore(false);
+      setLoading(false);
+    }
+  };
+
+  const ordersLengthRef = useRef(0);
+  useEffect(() => {
+    ordersLengthRef.current = orders.length;
+  }, [orders.length]);
+
+  useEffect(() => {
+    if (!observerTarget || !hasMore || loading || loadingMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchOrders(true);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    observer.observe(observerTarget);
+    return () => observer.disconnect();
+  }, [observerTarget, hasMore, loading, loadingMore, offset]);
+
   useEffect(() => {
     fetch("/api/auth/me").then(res => res.ok ? res.json() : null).then(data => setUser(data));
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
+    
+    const interval = setInterval(() => {
+       fetchOrders(false, true, ordersLengthRef.current);
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
+
 
   const getStatusDisplay = (status: string) => {
     const map: any = {
@@ -136,9 +187,27 @@ export default function UserOrders() {
                   )}
                 </div>
 
-                <div className="flex justify-between items-center pt-2">
-                  <span className="text-slate-500 font-bold uppercase tracking-widest text-xs">Total</span>
-                  <span className="text-2xl font-bold text-blue-600">{formatPrice(order.totalPrice)}</span>
+                <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Subtotal</span>
+                    <span className="text-slate-600 font-medium">{formatPrice(order.totalPrice - (order.shipping || 0) - (order.tax || 0))}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Frete</span>
+                    <span className={order.shipping === 0 ? "text-emerald-500 font-bold" : "text-slate-600"}>
+                      {order.shipping === 0 ? "Grátis" : formatPrice(order.shipping)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Taxa</span>
+                    <span className={order.tax === 0 ? "text-emerald-500 font-bold" : "text-slate-600"}>
+                      {order.tax === 0 ? "Grátis" : formatPrice(order.tax)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-slate-50">
+                    <span className="text-slate-700 font-bold">Total</span>
+                    <span className="text-xl font-bold text-blue-600">{formatPrice(order.totalPrice)}</span>
+                  </div>
                 </div>
 
                 <div className="pt-4 flex flex-col gap-3">
@@ -195,6 +264,8 @@ export default function UserOrders() {
               </div>
             );
           })}
+          {hasMore && <div ref={setObserverTarget} className="h-4 w-full" />}
+          {loadingMore && <p className="text-center text-slate-500 text-sm py-4">Carregando mais...</p>}
         </div>
       </main>
 

@@ -69,6 +69,19 @@ export function AdminSidebar() {
             </Link>
           );
         })}
+        <Link
+          href="/separador"
+          onClick={() => setIsOpen(false)}
+          className={cn(
+            "flex lg:hidden items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+            pathname === "/separador"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
+              : "text-slate-500 hover:bg-white/60 hover:text-slate-900"
+          )}
+        >
+          <Package size={20} />
+          Separador
+        </Link>
       </nav>
 
       <button 

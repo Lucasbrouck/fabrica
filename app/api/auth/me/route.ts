@@ -33,6 +33,9 @@ export async function GET(request: NextRequest) {
         province: true,
         city: true,
         state: true,
+        orderDays: true,
+        shippingCost: true,
+        taxCost: true,
       },
     });
 

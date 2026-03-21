@@ -35,6 +35,9 @@ model User {
   mustChangePassword Boolean @default(false)
   boletoDueDays      Int     @default(28)
   asaasCustomerId   String?
+  orderDays          String[] @default([])
+  shippingCost       Float    @default(0)
+  taxCost            Float    @default(0)
   orders    Order[]
   tickets   Ticket[]
   createdAt DateTime @default(now())
@@ -92,6 +95,8 @@ model Order {
   tickets     Ticket[]
   totalPrice  Float
   discount    Float       @default(0)
+  shipping    Float       @default(0)
+  tax         Float       @default(0)
   signature   String?     // Base64 signature
   receiverName String?    // Nome de quem recebeu
   notes        String?    // Observações de divergência

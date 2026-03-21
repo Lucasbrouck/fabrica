@@ -741,23 +741,86 @@ export default function UsersPage() {
             {/* TAB: FINANCEIRO */}
             {editTab === "FINANCEIRO" && (
               <div className="space-y-6 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
-                {/* Parametrização Boleto */}
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-bold text-slate-800 text-sm">Vencimento do Boleto</p>
-                    <p className="text-xs text-slate-500">Defina quantos dias o cliente tem para pagar após a emissão.</p>
+                {/* Parametrização Boleto e Custos */}
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm">Vencimento do Boleto</p>
+                      <p className="text-xs text-slate-500">Defina quantos dias o cliente tem para pagar após a emissão.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        min="1"
+                        className="w-16 px-2 py-1.5 rounded-xl border border-blue-200 text-center font-bold text-blue-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={editFormData.boletoDueDays || 28}
+                        onChange={(e) => setEditFormData({...editFormData, boletoDueDays: e.target.value})}
+                      />
+                      <span className="text-xs font-bold text-blue-500">DIAS</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="number" 
-                      min="1"
-                      className="w-16 px-2 py-1.5 rounded-xl border border-blue-200 text-center font-bold text-blue-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={editFormData.boletoDueDays || 28}
-                      onChange={(e) => setEditFormData({...editFormData, boletoDueDays: e.target.value})}
-                    />
-                    <span className="text-xs font-bold text-blue-500">DIAS</span>
+
+                  <div className="grid grid-cols-2 gap-4 pt-3 border-t border-blue-100/50">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase ml-1">Frete (R$)</label>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        min="0"
+                        className="w-full px-4 py-2 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+                        value={editFormData.shippingCost !== undefined ? editFormData.shippingCost : 0}
+                        onChange={(e) => setEditFormData({...editFormData, shippingCost: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-500 uppercase ml-1">Taxa (R$)</label>
+                      <input 
+                        type="number" 
+                        step="0.01"
+                        min="0"
+                        className="w-full px-4 py-2 rounded-xl border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium"
+                        value={editFormData.taxCost !== undefined ? editFormData.taxCost : 0}
+                        onChange={(e) => setEditFormData({...editFormData, taxCost: e.target.value})}
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {/* Dias de Pedidos */}
+                <div className="p-4 bg-white rounded-2xl border border-slate-100 space-y-3">
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">Dias de Pedidos Permitidos</p>
+                    <p className="text-xs text-slate-500">Selecione os dias da semana em que o cliente pode efetuar pedidos.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"].map((day) => {
+                      const isSelected = editFormData.orderDays?.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            const current = editFormData.orderDays || [];
+                            const updated = current.includes(day)
+                              ? current.filter((d: string) => d !== day)
+                              : [...current, day];
+                            setEditFormData({ ...editFormData, orderDays: updated });
+                          }}
+                          className={cn(
+                            "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border",
+                            isSelected 
+                              ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-100" 
+                              : "bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100"
+                          )}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+
 
                 {/* Historico de Pedidos */}
                 <div className="space-y-3">

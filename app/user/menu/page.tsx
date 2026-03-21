@@ -202,10 +202,41 @@ export default function UserMenu() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex justify-between items-center text-xl font-bold">
-                <span className="text-slate-600 text-lg uppercase tracking-wider">Subtotal</span>
-                <span className="text-slate-900">{formatPrice(total)}</span>
-              </div>
+              {/* Constants for Day Check */}
+              {(() => {
+                const daysPt = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+                const today = new Date();
+                const todayStr = daysPt[today.getDay()];
+                const isOrderDay = user?.orderDays?.includes(todayStr);
+                const clientShipping = isOrderDay ? 0 : (user?.shippingCost || 0);
+                const clientTax = isOrderDay ? 0 : (user?.taxCost || 0);
+
+                return (
+                  <div className="space-y-1.5 border-t border-white/20 pt-4 mb-4">
+                    <div className="flex justify-between items-center text-sm text-slate-600">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(total)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-slate-600">
+                      <span>Frete</span>
+                      <span className={clientShipping === 0 ? "text-emerald-500 font-bold flex items-center gap-1" : ""}>
+                         {isOrderDay && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">Dia do Pedido</span>}
+                         {clientShipping === 0 ? "Grátis" : formatPrice(clientShipping)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm text-slate-600">
+                      <span>Taxa</span>
+                      <span className={clientTax === 0 ? "text-emerald-500 font-bold" : ""}>
+                         {clientTax === 0 ? "Grátis" : formatPrice(clientTax)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xl font-bold border-t border-white/40 pt-2">
+                      <span>Total</span>
+                      <span>{formatPrice(total + clientShipping + clientTax)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
               <Button className="w-full py-6 text-lg" disabled={cart.length === 0} onClick={placeOrder}>
                 Finalizar Pedido
               </Button>

@@ -62,6 +62,9 @@ export async function PUT(
         city: body.city,
         state: body.state,
         boletoDueDays: body.boletoDueDays ? Number(body.boletoDueDays) : undefined,
+        orderDays: body.orderDays,
+        shippingCost: body.shippingCost !== undefined ? Number(body.shippingCost) : undefined,
+        taxCost: body.taxCost !== undefined ? Number(body.taxCost) : undefined,
       }
     });
 

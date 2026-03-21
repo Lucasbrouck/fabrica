@@ -31,6 +31,7 @@ export default function AdminOrders() {
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [discount, setDiscount] = useState<number>(0);
+  const [modalDiscount, setModalDiscount] = useState<number>(0);
   const [userSearch, setUserSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
 
@@ -65,6 +66,7 @@ export default function AdminOrders() {
 
   const handleOpenModal = (order: any) => {
     setSelectedOrder(order);
+    setModalDiscount(order.discount || 0);
     setEditingItems(JSON.parse(JSON.stringify(order.items)));
     setIsEditing(false);
   };
@@ -103,6 +105,26 @@ export default function AdminOrders() {
     }
     await updateStatus(order.id, "DISPATCHED");
     setConfirmDispatch(null);
+  };
+
+  const handleSaveDiscount = async () => {
+    if (!selectedOrder) return;
+    try {
+      const res = await fetch(`/api/orders/${selectedOrder.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discount: modalDiscount }),
+      });
+      if (res.ok) {
+        fetchOrders();
+        setSelectedOrder(null);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Erro ao salvar desconto");
+      }
+    } catch (error) {
+       alert("Erro ao salvar desconto");
+    }
   };
 
   const updateCartQuantity = (product: any, delta: number) => {
@@ -263,7 +285,7 @@ export default function AdminOrders() {
 
       {/* List View */}
       <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
@@ -367,6 +389,62 @@ export default function AdminOrders() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4 p-4 bg-slate-50/50">
+          {filteredOrders.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-3 opacity-30 text-slate-500">
+              <ShoppingBasket size={48} />
+              <p className="font-black uppercase tracking-widest text-xs">Nenhum pedido encontrado</p>
+            </div>
+          ) : (
+            filteredOrders.map((order) => {
+              const status = statusMap[order.status] || statusMap.PLACED;
+              const StatusIcon = status.icon;
+
+              return (
+                <div 
+                  key={order.id} 
+                  onClick={() => handleOpenModal(order)}
+                  className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3 cursor-pointer active:scale-98 transition-transform"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex flex-col">
+                      <span className="font-mono font-bold text-slate-400 text-xs">#{order.displayId}</span>
+                      <span className="font-bold text-slate-900 mt-1 uppercase text-sm tracking-tight">{order.user?.name || "Cliente Final"}</span>
+                    </div>
+                    <span className="font-black text-blue-600 text-base">{formatPrice(order.totalPrice)}</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
+                      status.color
+                    )}>
+                      <StatusIcon size={12} />
+                      {order.status === "READY_FOR_PICKUP" ? "Separado" : status.label}
+                    </span>
+
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider",
+                      order.asaasPaymentStatus === "CONFIRMED" || order.asaasPaymentStatus === "RECEIVED" ? "bg-emerald-50 text-emerald-600" :
+                      order.asaasPaymentStatus === "OVERDUE" ? "bg-red-50 text-red-600" :
+                      order.asaasPaymentStatus === "PENDING" ? "bg-amber-50 text-amber-600" : "bg-slate-50 text-slate-500"
+                    )}>
+                      {order.asaasPaymentStatus === "CONFIRMED" || order.asaasPaymentStatus === "RECEIVED" ? "PAGO" :
+                       order.asaasPaymentStatus === "OVERDUE" ? "VENCIDO" : "PENDENTE"}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-50 text-slate-400 text-[10px] font-bold">
+                     <span>{new Date(order.createdAt).toLocaleDateString('pt-BR')} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                     <ChevronRight size={16} className="text-slate-300" />
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -638,16 +716,63 @@ export default function AdminOrders() {
                   )}
 
                   <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 space-y-3">
-                     {selectedOrder.discount > 0 && (
-                       <div className="flex justify-between items-center text-xs font-bold text-slate-500">
-                          <span>DESCONTO</span>
-                          <span className="text-red-500">-{formatPrice(selectedOrder.discount)}</span>
-                       </div>
-                     )}
-                     <div className="flex justify-between items-center">
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Valor Final</span>
-                        <span className="text-3xl font-black text-blue-600">{formatPrice(selectedOrder.totalPrice)}</span>
-                     </div>
+                     {(() => {
+                        const subtotalItems = selectedOrder.items?.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0) || 0;
+                        const hasExtraCosts = (selectedOrder.shipping || 0) > 0 || (selectedOrder.tax || 0) > 0;
+                        
+                        return (
+                           <>
+                             {hasExtraCosts && (
+                               <div className="space-y-1 pb-2 border-b border-slate-200/50">
+                                  <div className="flex justify-between items-center text-xs text-slate-500">
+                                     <span>Subtotal</span>
+                                     <span>{formatPrice(subtotalItems)}</span>
+                                  </div>
+                                  {selectedOrder.shipping > 0 && (
+                                    <div className="flex justify-between items-center text-xs text-slate-500">
+                                       <span>Frete</span>
+                                       <span>{formatPrice(selectedOrder.shipping)}</span>
+                                    </div>
+                                  )}
+                                  {selectedOrder.tax > 0 && (
+                                    <div className="flex justify-between items-center text-xs text-slate-500">
+                                       <span>Taxa</span>
+                                       <span>{formatPrice(selectedOrder.tax)}</span>
+                                    </div>
+                                  )}
+                               </div>
+                             )}
+
+                             {['PLACED', 'PREPARING', 'READY_FOR_PICKUP'].includes(selectedOrder.status) ? (
+                                <div className="flex justify-between items-center text-xs font-bold text-red-500">
+                                   <div className="flex items-center gap-1.5">
+                                      <Tag size={12} />
+                                      <span>DESCONTO (R$)</span>
+                                   </div>
+                                   <input 
+                                     type="number" 
+                                     value={modalDiscount}
+                                     onChange={(e) => setModalDiscount(Number(e.target.value))}
+                                     className="w-20 bg-transparent text-right focus:outline-none font-black border-b border-slate-300 px-1"
+                                     placeholder="0,00"
+                                   />
+                                </div>
+                             ) : selectedOrder.discount > 0 ? (
+                                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                                   <span>DESCONTO</span>
+                                   <span className="text-red-500">-{formatPrice(selectedOrder.discount)}</span>
+                                </div>
+                             ) : null}
+
+                             <div className="flex justify-between items-center">
+                                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Valor Final</span>
+                                <span className="text-3xl font-black text-blue-600">
+                                   {formatPrice(Math.max(0, subtotalItems + (selectedOrder.shipping || 0) + (selectedOrder.tax || 0) - modalDiscount))}
+                                </span>
+                             </div>
+                           </>
+                        )
+                     })()}
                   </div>
 
                   {/* Billing & Receipt Info */}
@@ -716,7 +841,12 @@ export default function AdminOrders() {
 
                <div className="p-8 pt-0 flex gap-4">
                   <Button variant="secondary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => setSelectedOrder(null)}>Fechar</Button>
-                  {selectedOrder.status === 'PLACED' && (
+                  
+                  {modalDiscount !== selectedOrder.discount && ['PLACED', 'PREPARING', 'READY_FOR_PICKUP'].includes(selectedOrder.status) && (
+                    <Button className="flex-1 py-4 font-bold uppercase tracking-widest text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSaveDiscount}>Salvar Desconto</Button>
+                  )}
+
+                  {selectedOrder.status === 'PLACED' && modalDiscount === selectedOrder.discount && (
                     <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}>Aceitar Pedido</Button>
                   )}
                </div>
