@@ -123,8 +123,8 @@ export default function OrderMonitor() {
   );
 
   return (
-    <div className="space-y-8 h-full">
-      <div className="flex justify-between items-center text-sans">
+    <div className="flex flex-col h-full gap-8 overflow-hidden">
+      <div className="flex justify-between items-center text-sans flex-shrink-0">
         <div className="flex items-center gap-6">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -148,7 +148,7 @@ export default function OrderMonitor() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 h-[calc(100vh-250px)] overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 flex-1 min-h-0">
         {columns.map((col) => (
           <div key={col.title} className="flex flex-col gap-4 h-full">
             <div className="flex items-center gap-2 px-2">

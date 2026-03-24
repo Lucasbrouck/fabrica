@@ -78,8 +78,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Pedido não encontrado' }, { status: 404 });
     }
 
-    if (existingOrder.status === 'DISPATCHED' || existingOrder.status === 'DELIVERED') {
-      return NextResponse.json({ error: 'Não é possível editar pedidos já despachados ou concluídos' }, { status: 400 });
+    if (existingOrder.status === 'DELIVERED') {
+      return NextResponse.json({ error: 'Não é possível editar pedidos já concluídos' }, { status: 400 });
+    }
+
+    if (existingOrder.status === 'DISPATCHED') {
+      if (status !== 'DELIVERED') {
+        return NextResponse.json({ error: 'Pedidos despachados só podem ser concluídos' }, { status: 400 });
+      }
+      if (items !== undefined || (discount !== undefined && Number(discount) !== existingOrder.discount) || notes !== undefined) {
+        return NextResponse.json({ error: 'Não é possível editar itens de pedidos já despachados' }, { status: 400 });
+      }
     }
 
     const finalDiscount = discount !== undefined ? Number(discount) : existingOrder.discount;

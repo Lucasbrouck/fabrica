@@ -114,17 +114,7 @@ export async function GET(
     const pdfBuffer = doc.output('arraybuffer');
     let finalPdfBuffer: any = pdfBuffer;
 
-    let asaasPaymentId = order.asaasPaymentId;
-    if (!asaasPaymentId) {
-      console.log(`[PDF] Order #${order.displayId} has no asaasPaymentId. Generating payment on the fly...`);
-      try {
-        const result = await createPaymentForOrder(orderId);
-        asaasPaymentId = result.paymentId;
-        (order as any).asaasPaymentId = asaasPaymentId;
-      } catch (err) {
-        console.error("[PDF] Failed to create payment on the fly:", err);
-      }
-    }
+    const asaasPaymentId = order.asaasPaymentId;
 
     if (asaasPaymentId) {
       try {

@@ -6,7 +6,7 @@ import {
   Clock, CheckCircle2, Truck, CheckCircle, XCircle, 
   ShoppingBasket, Plus, Minus, X, Search, FileText, 
   Loader2, LogOut, PlusCircle, User, Tag, ArrowRight,
-  Filter, ChevronRight, MoreVertical, Package
+  Filter, ChevronRight, MoreVertical, Package, ChevronDown, ChevronUp
 } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { OrderStatus } from "@prisma/client";
@@ -34,6 +34,7 @@ export default function AdminOrders() {
   const [modalDiscount, setModalDiscount] = useState<number>(0);
   const [userSearch, setUserSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
+  const [itemsCollapsed, setItemsCollapsed] = useState(true);
 
   const router = useRouter();
 
@@ -69,6 +70,7 @@ export default function AdminOrders() {
     setModalDiscount(order.discount || 0);
     setEditingItems(JSON.parse(JSON.stringify(order.items)));
     setIsEditing(false);
+    setItemsCollapsed(true);
   };
 
   const updateStatus = async (orderId: string, status: string) => {
@@ -187,6 +189,7 @@ export default function AdminOrders() {
     READY_FOR_PICKUP: { label: "Separado", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
     DISPATCHED: { label: "Em Rota", color: "bg-indigo-100 text-indigo-700", icon: Truck },
     DELIVERED: { label: "Concluído", color: "bg-slate-100 text-slate-700", icon: CheckCircle },
+    CANCELLED: { label: "Cancelado", color: "bg-red-100 text-red-700", icon: XCircle },
   };
 
   const filters = [
@@ -195,6 +198,7 @@ export default function AdminOrders() {
     { label: "Em Separação", value: "PREPARING" },
     { label: "Em Rota", value: "DISPATCHED" },
     { label: "Concluídos", value: "DELIVERED" },
+    { label: "Cancelados", value: "CANCELLED" },
   ];
 
   const filteredOrders = orders.filter(o => {
@@ -367,6 +371,10 @@ export default function AdminOrders() {
                         ) : order.status === "PREPARING" || order.status === "READY_FOR_PICKUP" ? (
                           <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => setConfirmDispatch(order)}>
                             Enviar
+                          </Button>
+                        ) : order.status === "DISPATCHED" ? (
+                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => updateStatus(order.id, "DELIVERED")}>
+                            Concluir
                           </Button>
                         ) : (
                           <button onClick={() => handleOpenModal(order)} className="p-2 text-slate-300 hover:text-blue-600 transition-colors">
@@ -689,21 +697,41 @@ export default function AdminOrders() {
                         <h2 className="text-xl font-bold text-slate-900">{selectedOrder.user?.name}</h2>
                      </div>
                   </div>
-                  <button onClick={() => setSelectedOrder(null)} className="p-2 text-slate-400 hover:text-slate-600"><X size={24} /></button>
+                  <div className="flex items-center gap-2">
+                     <button 
+                       onClick={() => window.open(`/api/orders/${selectedOrder.id}/pdf`, "_blank")}
+                       className="p-2 text-slate-500 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 rounded-xl flex items-center gap-1 text-xs font-bold border border-slate-100"
+                     >
+                       <FileText size={16} /> <span>Romaneio</span>
+                     </button>
+                     <button onClick={() => setSelectedOrder(null)} className="p-2 text-slate-400 hover:text-slate-600"><X size={24} /></button>
+                  </div>
                </div>
                
                <div className="flex-1 overflow-y-auto p-8 pt-6 space-y-6 custom-scrollbar">
                   <div className="space-y-3">
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Itens do Pedido</h3>
-                     <div className="space-y-1">
-                        {selectedOrder.items?.map((item: any, idx: number) => (
-                           <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0 text-sm">
-                              <span className="font-bold text-slate-700">{item.quantity}x {item.product?.name}</span>
-                              <span className="font-black text-slate-900">{formatPrice(item.price * item.quantity)}</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
+                      <div className="flex justify-between items-center px-1">
+                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Itens do Pedido ({selectedOrder.items?.length || 0})</h3>
+                         <button 
+                           onClick={() => setItemsCollapsed(!itemsCollapsed)}
+                           className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1"
+                         >
+                           {itemsCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                           {itemsCollapsed ? "Expandir" : "Recolher"}
+                         </button>
+                      </div>
+                      
+                      {!itemsCollapsed && (
+                         <div className="space-y-1">
+                            {selectedOrder.items?.map((item: any, idx: number) => (
+                               <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-50 last:border-0 text-sm">
+                                  <span className="font-bold text-slate-700">{item.quantity}x {item.product?.name}</span>
+                                  <span className="font-black text-slate-900">{formatPrice(item.price * item.quantity)}</span>
+                               </div>
+                            ))}
+                         </div>
+                      )}
+                   </div>
  
                   {selectedOrder.notes && (
                     <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-2 text-amber-800">
@@ -848,6 +876,10 @@ export default function AdminOrders() {
 
                   {selectedOrder.status === 'PLACED' && modalDiscount === selectedOrder.discount && (
                     <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}>Aceitar Pedido</Button>
+                  )}
+
+                  {selectedOrder.status === 'DISPATCHED' && (
+                    <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => updateStatus(selectedOrder.id, 'DELIVERED')}>Concluir Pedido</Button>
                   )}
                </div>
             </div>

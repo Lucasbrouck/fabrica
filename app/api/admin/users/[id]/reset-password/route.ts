@@ -24,7 +24,7 @@ export async function POST(
       } as any,
     });
 
-    return NextResponse.json({ message: "Senha resetada com sucesso para '123456'" });
+    return NextResponse.json({ message: "Senha resetada. O usuário deverá redefinir no Primeiro Acesso." });
   } catch (error) {
     console.error("Reset Password Error:", error);
     return NextResponse.json({ error: "Erro ao resetar senha" }, { status: 500 });

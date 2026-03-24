@@ -176,7 +176,7 @@ export default function UsersPage() {
   };
 
   const handleResetPassword = async (id: string) => {
-    if (!confirm("Tem certeza que deseja resetar a senha para '123456'?")) return;
+    if (!confirm("Tem certeza que deseja resetar a senha? O usuário deverá redefinir no Primeiro Acesso.")) return;
 
     try {
       const res = await fetch(`/api/admin/users/${id}/reset-password`, {
@@ -574,7 +574,7 @@ export default function UsersPage() {
 
                   <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-3">
                      <Lock size={16} className="text-blue-500 shrink-0" />
-                     <p className="text-[11px] text-slate-600 font-medium">A senha inicial será padrão: <span className="font-bold text-slate-800">123456</span>. O usuário deverá escolher uma nova no primeiro acesso.</p>
+                     <p className="text-[11px] text-slate-600 font-medium">O usuário deverá criar sua senha no <span className="font-bold text-slate-800">Primeiro Acesso</span>.</p>
                   </div>
 
                   <div className="flex gap-2 pt-4">
