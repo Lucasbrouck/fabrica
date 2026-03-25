@@ -258,8 +258,8 @@ export default function AdminOrders() {
         
         <div className="flex gap-3">
           <Button 
-            variant="outline" 
-            className="border-slate-200 text-slate-600 hover:bg-slate-50 px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-sm"
+            variant="secondary" 
+            className="border-blue-200 text-blue-700 font-bold px-6 py-4 rounded-2xl flex items-center gap-2 shadow-sm"
             onClick={async () => {
               try {
                 const res = await fetch('/api/admin/test-sheets', { method: 'POST' });
