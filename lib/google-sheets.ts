@@ -53,6 +53,7 @@ export async function appendRowToSheet(data: AppendRowParams) {
       }
 
       log("[Google Sheets] Chave raw len: " + (privateKey?.length || 0));
+      console.log("[Google Sheets] Chave raw len: ", (privateKey?.length || 0));
 
       // Limpeza robusta da chave privada
       if (privateKey) {
@@ -76,11 +77,14 @@ export async function appendRowToSheet(data: AppendRowParams) {
         // Garante que a chave comece e termine com as tags PEM corretas
         if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') && !privateKey.includes('-----BEGIN RSA PRIVATE KEY-----')) {
             log("[Google Sheets] Alerta: Chave privada não parece ter o cabeçalho PEM esperado.");
+            console.warn("[Google Sheets] Alerta: Chave privada não parece ter o cabeçalho PEM esperado.");
         }
       }
 
       log("[Google Sheets] Chave processed len: " + (privateKey?.length || 0));
+      console.log("[Google Sheets] Chave processed len: ", (privateKey?.length || 0));
       log("[Google Sheets] Chave começa com Header? " + privateKey.startsWith("-----BEGIN"));
+      console.log("[Google Sheets] Chave começa com Header? ", privateKey.startsWith("-----BEGIN"));
 
       // Usa GoogleAuth com objeto de credenciais (Normalmente mais resiliente que o construtor JWT manual)
       auth = new google.auth.GoogleAuth({
