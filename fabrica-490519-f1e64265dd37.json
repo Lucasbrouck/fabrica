@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "fabrica-490519",
+  "private_key_id": "f1e64265dd37",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDChzLztW97NK6M\n1n5hHZ/tU8LwBXWFkAoeIZAML1MxLCIc99aRGIDarswjgsCv3g5mhznsHlKq8+9V\n8MPijlj+afGestknwpMYZm6kUW1yE6om20Rt/u5GrNOdoWYbB0hNx3Vxjq692EBa\n2vJUrifRRL3jlY3VyvB5u9SxKP6Myy17FZC9ENkI2rytKg+UjmUPStFXuNJwfB64\nSeM0eipkbMModmfbdPYyMtKdK9VR63d138ItZiLpVfYT9AfIBZBqW+ppAY3gSCvS\no1jlwD88+p1nyqugM6G9KcYrvwqByG+hHgRA8mFyxddgx5FhdxNjdywkTXlon+nc\ny5hXkhh1AgMBAAECggEACNdxzKtut3wfweV+5YWd7wDLX7Lz0kAHgbKXVEJzZs0B\neO0X2szxEF95BlUrUmMGpwjW7GE9cyk2s+KHWL0NFPU2RvcMkTbSDj4bocrUrWZw\n6aa2L8SySlKRJL1BAZH9apGaCDEKxrS1Shvg/1HSG/wioF08Dt9UOkg8BNhe54HB\nTQGQV2UJ4PJcVK9vvf1Q0OgBfmpshzHUI62Xa529cwB56VYL/GAVqo9/m+JIXonJ\nXN3s7yE9qD24UXznYp1s/HsZdWOqHizTtde+nsRBUH+W6+lwQA+lvlmoGllyG/TV\n2zDZql1grXr5RWEkFRXA88ByHpN/0xxlYjtMf1Zd0QKBgQDrd9F6Unag5IURaYy0\ncWI1VB1Vrt7/4O0zUiTW6WBVAeadsBOVf90cifIGNhS3tex68vo1izPoKnzBUd3m\n5nLsUpbGFEIz1MF9G2iKzewpzxq2xsUtuhwDhfXGNK2+DhK4oS9R7HgQlQRkZGOf\nwgJOKFdkzAwm1qPDBJM6SOMWRQKBgQDTfYI8nwmTpmiuayWEGFxEKpLsvp9t/5Ma\nG6JzV3D5IzDrtjmVtfoJFbUrw/tFKHn6Xv23V4/cNfQJUWszVelkDXMdiubibWs7\n3GzOF5TSx+K+bfDfjO+md14SkjBZSYnbhdr8OMH86btIXwm6urw/5C5V4LiTYfIj\n017JCyZ0cQKBgQDWOg+qc2YcYWwzeE0cSd/o1ttNfijCsff8biq4IGGVVYJkSrK2\nnDsl4NcCEaftsCUzguZjWn9iJW2VUI9LqLQ8D7O/COVmVJWo5gvJ5SmMrDEIw3TX\ncnBUQEdoCbtco18i/PqZVUOzCnCRicgdrBv+0bMZMI+JslQRdJMiPvfj5QKBgQC2\nfSgx8vEqjH7rcd0PXI3Q7AOXcOzU16Ew+AN3D06WS31dBwItYrb7u9V2jEd253RJ\nTEoVN+MUmyGWIMElrM4U3V4lccPEQbI0FwFz2/k43+2RcABWhaAMvhdYYviBMulX\nmOralIcfGvfVfNxCWfsyDkzFIYFi+zMbIro5M/vcoQKBgQDBn0aBtXEQyBlFun0B\nNfw+JeSWh5DEZzCEq/SsGsNkLcO3x4xrdPXS9MIXIgGgl8cHhh/TgtCLR1gA+6wa\n+8lS7aDA6fIbie8sNTgKRvQlm2Cb36kh9AwnrgkrnwoMGrIuu7Z7XLARP8Y0u0q+\nD6KOqf7Jt50BFV0LTFFvhQZ27g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "sheets-sync@fabrica-490519.iam.gserviceaccount.com",
+  "client_id": "116518593414966671842",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/node/auth/v1/certs/sheets-sync%40fabrica-490519.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
