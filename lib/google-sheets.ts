@@ -66,6 +66,21 @@ export async function appendRowToSheet(data: AppendRowParams) {
           privateKey = privateKey.substring(1, privateKey.length - 1);
         }
 
+        // SUPORTE A BASE64: Se não começar com header mas for uma tripa longa, tenta decodificar
+        if (!privateKey.startsWith('-----BEGIN') && privateKey.length > 500) {
+           log("[Google Sheets] Chave não tem Header. Tentando decodificar como Base64...");
+           try {
+             const decoded = Buffer.from(privateKey, 'base64').toString('utf8');
+             if (decoded.includes('-----BEGIN PRIVATE KEY-----')) {
+               privateKey = decoded;
+               log("[Google Sheets] ✅ Chave Base64 decodificada com sucesso.");
+               console.log("[Google Sheets] ✅ Chave Base64 decodificada com sucesso.");
+             }
+           } catch (e) {
+             log("[Google Sheets] Erro ao tentar decodificar Base64.");
+           }
+        }
+
         // Converte \n literais em quebras de linha Reais
         // Também lida com possíveis \r residuais de Windows ou escapes duplicados
         privateKey = privateKey
