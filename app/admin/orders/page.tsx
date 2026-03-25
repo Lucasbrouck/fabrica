@@ -256,13 +256,31 @@ export default function AdminOrders() {
           <p className="text-slate-500 font-medium">Visualize e gerencie todos os pedidos da fábrica.</p>
         </div>
         
-        <Button 
-          onClick={() => setIsCreating(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100"
-        >
-          <PlusCircle size={20} />
-          Novo Pedido
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            className="border-slate-200 text-slate-600 hover:bg-slate-50 px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-sm"
+            onClick={async () => {
+              try {
+                const res = await fetch('/api/admin/test-sheets', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) alert(data.message);
+                else alert("Erro: " + data.error);
+              } catch (e) {
+                alert("Erro de conexão");
+              }
+            }}
+          >
+            Testar Planilha
+          </Button>
+          <Button 
+            onClick={() => setIsCreating(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100"
+          >
+            <PlusCircle size={20} />
+            Novo Pedido
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
