@@ -52,27 +52,42 @@ export async function appendRowToSheet(data: AppendRowParams) {
         return;
       }
 
-      log("[Google Sheets] Chave raw len: " + privateKey.length);
+      log("[Google Sheets] Chave raw len: " + (privateKey?.length || 0));
 
+      // Limpeza robusta da chave privada
       if (privateKey) {
         privateKey = privateKey.trim();
-        if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || 
-            (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+        
+        // Remove aspas se existirem (comum em .env)
+        if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+          privateKey = privateKey.substring(1, privateKey.length - 1);
+        } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
           privateKey = privateKey.substring(1, privateKey.length - 1);
         }
-        // Corrige os \o e \  (barra + espaço) que costumam vir de erros de digitação/cópia
-        privateKey = privateKey.replace(/\\o/g, '\\n').replace(/\\ /g, '\\n').replace(/\\n/g, '\n');
+
+        // Converte \n literais em quebras de linha Reais
+        // Também lida com possíveis \r residuais de Windows ou escapes duplicados
+        privateKey = privateKey
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '')
+          .replace(/\r/g, '')
+          .trim();
         
-        // Correção Crucial para Windows: Remove Retornos de Carro (\r) que quebram o Decoder no Next.js
-        privateKey = privateKey.replace(/\r/g, '').trim();
+        // Garante que a chave comece e termine com as tags PEM corretas
+        if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') && !privateKey.includes('-----BEGIN RSA PRIVATE KEY-----')) {
+            log("[Google Sheets] Alerta: Chave privada não parece ter o cabeçalho PEM esperado.");
+        }
       }
 
-      log("[Google Sheets] Chave processed len: " + privateKey.length);
-      log("[Google Sheets] Chave começa com Header? " + privateKey.startsWith("-----BEGIN PRIVATE KEY-----"));
+      log("[Google Sheets] Chave processed len: " + (privateKey?.length || 0));
+      log("[Google Sheets] Chave começa com Header? " + privateKey.startsWith("-----BEGIN"));
 
-      auth = new google.auth.JWT({
-        email: clientEmail,
-        key: privateKey,
+      // Usa GoogleAuth com objeto de credenciais (Normalmente mais resiliente que o construtor JWT manual)
+      auth = new google.auth.GoogleAuth({
+        credentials: {
+          client_email: clientEmail,
+          private_key: privateKey,
+        },
         scopes: ['https://www.googleapis.com/auth/spreadsheets']
       });
     }

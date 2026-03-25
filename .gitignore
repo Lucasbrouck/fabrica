@@ -55,4 +55,13 @@ next-env.d.ts
 /ptest/
 
 # Google Sheets Credentials
-fabrica-490519-*.json
+/scripts/diag-*.js
+/scripts/diag-*.ts
+/scripts/list-*.js
+/scripts/test-*.js
+/scripts/test-*.ts
+/scripts/test_output.txt
+/scripts/delete-order-*.ts
+/sheets_debug.log
+/build_output*.txt
+/prisma_*.log

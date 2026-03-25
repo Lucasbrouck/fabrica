@@ -13,16 +13,19 @@ async function debugExactAuth() {
         (key.startsWith("'") && key.endsWith("'"))) {
       key = key.substring(1, key.length - 1);
     }
-    key = key.replace(/\\o/g, '\\n');
-    key = key.replace(/\\ /g, '\\n');
-    key = key.replace(/\\n/g, '\n').trim();
+    key = key.replace(/\\n/g, '\n')
+             .replace(/\\r/g, '')
+             .replace(/\r/g, '')
+             .trim();
   }
 
   try {
     const { google } = await import("googleapis");
-    const auth = new google.auth.JWT({
-      email: email,
-      key: key,
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: email,
+        private_key: key,
+      },
       scopes: ['https://www.googleapis.com/auth/spreadsheets']
     });
 

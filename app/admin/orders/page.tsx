@@ -101,12 +101,32 @@ export default function AdminOrders() {
     }
   };
 
-  const finishDispatch = async (order: any, shouldGenerateAsaas: boolean) => {
-    if (shouldGenerateAsaas) {
-      await generateAsaasPayment(order.id);
+  const finishDispatch = async (order: any) => {
+    setAsaasLoading(true);
+    try {
+      // 1. Gerar cobrança se não existir
+      if (!order.asaasPaymentId) {
+        const res = await fetch(`/api/orders/${order.id}/payment`, { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Erro ao gerar cobrança");
+        }
+        // Recarrega ordens para garantir que o asaasPaymentId esteja atualizado antes do PDF
+        await fetchOrders();
+      }
+      
+      // 2. Abrir Romaneio (já terá o boleto anexado se o asaasPaymentId existir)
+      window.open(`/api/orders/${order.id}/pdf`, "_blank");
+      
+      // 3. Atualizar status para DISPATCHED
+      await updateStatus(order.id, "DISPATCHED");
+      
+      setConfirmDispatch(null);
+    } catch (error: any) {
+      alert(error.message || "Erro no processo de despacho");
+    } finally {
+      setAsaasLoading(false);
     }
-    await updateStatus(order.id, "DISPATCHED");
-    setConfirmDispatch(null);
   };
 
   const handleSaveDiscount = async () => {
@@ -899,31 +919,29 @@ export default function AdminOrders() {
               </div>
 
               <div className="space-y-4">
-                <Button 
-                   variant="secondary" 
-                   className="w-full flex items-center justify-center gap-3 py-6 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                   onClick={() => window.open(`/api/orders/${confirmDispatch.id}/pdf`, "_blank")}
-                >
-                   <FileText size={20} /> Baixar Romaneio (PDF)
-                </Button>
-
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Ações de Cobrança</p>
-                  <Button 
-                    className="w-full py-6 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100"
-                    disabled={asaasLoading}
-                    onClick={() => finishDispatch(confirmDispatch, true)}
-                  >
-                    {asaasLoading ? <Loader2 className="animate-spin" /> : "Gerar Cobrança Asaas & Enviar"}
-                  </Button>
-                  <Button 
-                    variant="ghost"
-                    className="w-full py-4 text-slate-500 hover:text-slate-700 text-sm font-bold"
-                    onClick={() => finishDispatch(confirmDispatch, false)}
-                  >
-                    Enviar sem cobrança
-                  </Button>
+                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-2">
+                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest text-center">Fluxo Obrigatório</p>
+                  <p className="text-xs text-indigo-700 text-center font-medium leading-relaxed">
+                    Ao despachar, o sistema irá gerar a cobrança Asaas (se necessário) e abrir o Romaneio com o boleto anexado.
+                  </p>
                 </div>
+
+                <Button 
+                  className="w-full py-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-100 flex flex-col gap-1 items-center justify-center rounded-3xl"
+                  disabled={asaasLoading}
+                  onClick={() => finishDispatch(confirmDispatch)}
+                >
+                  {asaasLoading ? (
+                    <Loader2 className="animate-spin" />
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-base font-black uppercase tracking-tight">
+                        <FileText size={20} /> Gerar Cobrança e Romaneio
+                      </div>
+                      <span className="text-[10px] font-bold opacity-80">Iniciar rota e imprimir documentos</span>
+                    </>
+                  )}
+                </Button>
               </div>
 
               <button 
