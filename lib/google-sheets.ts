@@ -138,6 +138,17 @@ export async function appendRowToSheet(data: AppendRowParams) {
     });
 
     console.log(`[Google Sheets] Linha adicionada com sucesso para o pedido ${data.orderId}`);
+
+    // Envia notificação via ntfy.sh
+    try {
+      await fetch('https://ntfy.sh/jalacobrancagerada_r4y7', {
+        method: 'POST',
+        body: 'uma cobrança foi gerada'
+      });
+      console.log(`[ntfy] Notificação enviada com sucesso para o pedido ${data.orderId}`);
+    } catch (ntfyError) {
+      console.error("[ntfy] Erro ao enviar notificação:", ntfyError);
+    }
   } catch (error) {
     console.error("[Google Sheets] Erro ao adicionar linha:", error);
     // Não lançamos o erro para não travar o fluxo principal (Pedido/Pagamento)
