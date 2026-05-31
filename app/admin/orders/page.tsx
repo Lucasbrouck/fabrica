@@ -385,9 +385,18 @@ export default function AdminOrders() {
                     <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                        <div className="flex justify-end gap-2">
                         {order.status === "PLACED" ? (
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => updateStatus(order.id, "PREPARING")}>
-                            Aceitar
-                          </Button>
+                          <>
+                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => updateStatus(order.id, "PREPARING")}>
+                              Aceitar
+                            </Button>
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => {
+                              if (confirm("Deseja realmente cancelar este pedido?")) {
+                                updateStatus(order.id, "CANCELLED");
+                              }
+                            }}>
+                              Cancelar
+                            </Button>
+                          </>
                         ) : order.status === "PREPARING" || order.status === "READY_FOR_PICKUP" ? (
                           <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => setConfirmDispatch(order)}>
                             Enviar
@@ -895,7 +904,14 @@ export default function AdminOrders() {
                   )}
 
                   {selectedOrder.status === 'PLACED' && modalDiscount === selectedOrder.discount && (
-                    <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}>Aceitar Pedido</Button>
+                     <>
+                       <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}>Aceitar Pedido</Button>
+                       <Button className="flex-1 py-4 font-bold uppercase tracking-widest text-xs bg-red-600 hover:bg-red-700 text-white" onClick={() => {
+                         if (confirm("Deseja realmente cancelar este pedido?")) {
+                           updateStatus(selectedOrder.id, 'CANCELLED');
+                         }
+                       }}>Cancelar Pedido</Button>
+                     </>
                   )}
 
                   {selectedOrder.status === 'DISPATCHED' && (
