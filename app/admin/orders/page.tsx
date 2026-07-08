@@ -22,6 +22,7 @@ export default function AdminOrders() {
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [confirmDispatch, setConfirmDispatch] = useState<any | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<any | null>(null);
   const [asaasLoading, setAsaasLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
   const [paymentFilter, setPaymentFilter] = useState<string>("ALL");
@@ -385,18 +386,9 @@ export default function AdminOrders() {
                     <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                        <div className="flex justify-end gap-2">
                         {order.status === "PLACED" ? (
-                          <>
-                            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => updateStatus(order.id, "PREPARING")}>
-                              Aceitar
-                            </Button>
-                            <Button size="sm" className="bg-red-600 hover:bg-red-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => {
-                              if (confirm("Deseja realmente cancelar este pedido?")) {
-                                updateStatus(order.id, "CANCELLED");
-                              }
-                            }}>
-                              Cancelar
-                            </Button>
-                          </>
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => updateStatus(order.id, "PREPARING")}>
+                            Aceitar
+                          </Button>
                         ) : order.status === "PREPARING" || order.status === "READY_FOR_PICKUP" ? (
                           <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => setConfirmDispatch(order)}>
                             Enviar
@@ -405,10 +397,16 @@ export default function AdminOrders() {
                           <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => updateStatus(order.id, "DELIVERED")}>
                             Concluir
                           </Button>
-                        ) : (
+                        ) : order.status === "DELIVERED" || order.status === "CANCELLED" ? (
                           <button onClick={() => handleOpenModal(order)} className="p-2 text-slate-300 hover:text-blue-600 transition-colors">
                             <ChevronRight size={18} />
                           </button>
+                        ) : null}
+
+                        {!["DELIVERED", "CANCELLED"].includes(order.status) && (
+                          <Button size="sm" className="bg-red-600 hover:bg-red-700 h-8 px-3 rounded-lg text-[10px] font-bold" onClick={() => setConfirmCancel(order)}>
+                            Cancelar
+                          </Button>
                         )}
                        </div>
                     </td>
@@ -904,14 +902,11 @@ export default function AdminOrders() {
                   )}
 
                   {selectedOrder.status === 'PLACED' && modalDiscount === selectedOrder.discount && (
-                     <>
-                       <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}>Aceitar Pedido</Button>
-                       <Button className="flex-1 py-4 font-bold uppercase tracking-widest text-xs bg-red-600 hover:bg-red-700 text-white" onClick={() => {
-                         if (confirm("Deseja realmente cancelar este pedido?")) {
-                           updateStatus(selectedOrder.id, 'CANCELLED');
-                         }
-                       }}>Cancelar Pedido</Button>
-                     </>
+                     <Button variant="primary" className="flex-1 py-4 font-bold uppercase tracking-widest text-xs" onClick={() => updateStatus(selectedOrder.id, 'PREPARING')}>Aceitar Pedido</Button>
+                  )}
+
+                  {!['DELIVERED', 'CANCELLED'].includes(selectedOrder.status) && modalDiscount === selectedOrder.discount && (
+                     <Button className="flex-1 py-4 font-bold uppercase tracking-widest text-xs bg-red-600 hover:bg-red-700 text-white" onClick={() => setConfirmCancel(selectedOrder)}>Cancelar Pedido</Button>
                   )}
 
                   {selectedOrder.status === 'DISPATCHED' && (
@@ -920,6 +915,40 @@ export default function AdminOrders() {
                </div>
             </div>
          </div>
+      )}
+
+      {/* Confirmation Modal (Cancel) */}
+      {confirmCancel && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="bg-white rounded-[2.5rem] p-8 border border-slate-200 shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-300">
+              <div className="text-center space-y-4 mb-8">
+                <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mx-auto">
+                  <XCircle size={32} />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Cancelar Pedido</h2>
+                <p className="text-slate-500 font-medium">Deseja realmente cancelar o pedido #{confirmCancel.displayId}?</p>
+              </div>
+
+              <div className="space-y-4">
+                <Button 
+                  className="w-full py-6 bg-red-600 hover:bg-red-700 text-white shadow-xl shadow-red-100 flex items-center justify-center rounded-2xl font-black uppercase tracking-widest"
+                  onClick={() => {
+                    updateStatus(confirmCancel.id, "CANCELLED");
+                    setConfirmCancel(null);
+                  }}
+                >
+                  Confirmar Cancelamento
+                </Button>
+              </div>
+
+              <button 
+                onClick={() => setConfirmCancel(null)}
+                className="mt-6 w-full text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest"
+              >
+                Voltar
+              </button>
+           </div>
+        </div>
       )}
 
       {/* Confirmation Modal (Asaas/PDF) */}
