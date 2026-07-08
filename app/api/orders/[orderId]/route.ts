@@ -83,8 +83,8 @@ export async function PATCH(
     }
 
     if (existingOrder.status === 'DISPATCHED') {
-      if (status !== 'DELIVERED') {
-        return NextResponse.json({ error: 'Pedidos despachados só podem ser concluídos' }, { status: 400 });
+      if (status !== undefined && status !== 'DELIVERED' && status !== 'CANCELLED') {
+        return NextResponse.json({ error: 'Pedidos despachados só podem ser concluídos ou cancelados' }, { status: 400 });
       }
       if (items !== undefined || (discount !== undefined && Number(discount) !== existingOrder.discount) || notes !== undefined) {
         return NextResponse.json({ error: 'Não é possível editar itens de pedidos já despachados' }, { status: 400 });
