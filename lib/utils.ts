@@ -11,3 +11,14 @@ export function formatPrice(price: number) {
     currency: 'BRL',
   }).format(price)
 }
+
+export function getRequestBaseUrl(request: Request): string {
+  const headers = request.headers;
+  const host = headers.get("x-forwarded-host") || headers.get("host") || "localhost:3000";
+  const proto = headers.get("x-forwarded-proto") || "http";
+  
+  const cleanProto = proto.split(",")[0].trim();
+  const cleanHost = host.split(",")[0].trim();
+  
+  return `${cleanProto}://${cleanHost}`;
+}

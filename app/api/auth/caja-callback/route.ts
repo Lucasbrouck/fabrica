@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { exchangeCaJaToken } from "@/lib/caja-client";
 import prisma from "@/lib/prisma";
 import { SignJWT } from "jose";
+import { getRequestBaseUrl } from "@/lib/utils";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "pdv-fabrica-premium-secret-key-2026"
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const baseUrl = getRequestBaseUrl(request);
     const cajaData = await exchangeCaJaToken(code);
     const cajaUser = cajaData.user;
 
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
         where: { id: linkedUser.id },
         data: { cajaRole: role, role: role }
       });
-      return await createSessionResponse(updatedUser, role, getDashboardRedirectUrl(role, request.url));
+      return await createSessionResponse(updatedUser, role, getDashboardRedirectUrl(role, baseUrl));
     }
 
     // Scenario 2: Same email
@@ -90,7 +92,7 @@ export async function GET(request: NextRequest) {
         where: { id: sameEmailUser.id },
         data: { cajaUserId: cajaUser.id, cajaRole: role, role: role }
       });
-      return await createSessionResponse(updatedUser, role, getDashboardRedirectUrl(role, request.url));
+      return await createSessionResponse(updatedUser, role, getDashboardRedirectUrl(role, baseUrl));
     }
 
     // Scenario 3: Not found - Redirect to linking decision page
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
       role: role
     });
 
-    const response = NextResponse.redirect(new URL("/auth/link-account", request.url));
+    const response = NextResponse.redirect(new URL("/auth/link-account", baseUrl));
     response.cookies.set("caja_pending", pendingCookieVal, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
