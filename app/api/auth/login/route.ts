@@ -29,6 +29,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "Esta conta está vinculada ao CaJa SSO. Use o botão de login do CaJa." },
+        { status: 401 }
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {

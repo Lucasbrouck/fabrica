@@ -217,6 +217,27 @@ export default function Home() {
               )}
             </Button>
 
+            {!isFirstAccess && (
+              <>
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-slate-200/80"></div>
+                  <span className="flex-shrink mx-4 text-slate-400 text-xs font-bold uppercase tracking-wider">ou</span>
+                  <div className="flex-grow border-t border-slate-200/80"></div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    window.location.href = "/api/auth/caja-redirect";
+                  }}
+                  className="w-full h-14 rounded-2xl text-lg font-bold flex items-center justify-center gap-2 border border-red-200/60 bg-red-50/10 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 active:scale-[0.98] shadow-sm hover:shadow-red-100"
+                >
+                  🌶️ Entrar com CaJa
+                </Button>
+              </>
+            )}
+
             {!isFirstAccess ? (
               <div className="text-center mt-4">
                 <button 
