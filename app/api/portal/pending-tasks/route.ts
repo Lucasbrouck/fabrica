@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           subtitle: `${customerName} · R$ ${totalFormatted}`,
           priority: "high",
           dueDate: order.createdAt.toISOString().slice(0, 10),
-          deepLink: "/admin/orders",
+          deepLink: `/admin/orders?orderId=${order.id}`,
         });
       } else if (order.status === "PLACED") {
         tasks.push({
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
           subtitle: `Aguardando confirmação · R$ ${totalFormatted}`,
           priority: "normal",
           dueDate: order.createdAt.toISOString().slice(0, 10),
-          deepLink: "/admin/orders",
+          deepLink: `/admin/orders?orderId=${order.id}`,
         });
       }
     }
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
         subtitle,
         priority: "high",
         dueDate: ticket.createdAt.toISOString().slice(0, 10),
-        deepLink: "/admin/sac",
+        deepLink: `/admin/sac?ticketId=${ticket.id}`,
       });
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui-button";
 import { 
   Clock, CheckCircle2, Truck, CheckCircle, XCircle, 
@@ -73,6 +73,21 @@ export default function AdminOrders() {
     setIsEditing(false);
     setItemsCollapsed(true);
   };
+
+  const hasAutoOpenedOrderRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoOpenedOrderRef.current || orders.length === 0) return;
+    if (typeof window === "undefined") return;
+    const orderIdParam = new URLSearchParams(window.location.search).get("orderId")?.trim();
+    if (!orderIdParam) return;
+    const matched = orders.find(
+      (o) => o.id === orderIdParam || String(o.displayId) === orderIdParam
+    );
+    if (matched) {
+      hasAutoOpenedOrderRef.current = true;
+      handleOpenModal(matched);
+    }
+  }, [orders]);
 
   const updateStatus = async (orderId: string, status: string) => {
     await fetch(`/api/orders/${orderId}`, {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Clock, AlertCircle, CheckCircle2, ChevronRight, User, Package, ImageIcon, Loader2, X, Search, MoreVertical, CheckCircle } from "lucide-react";
 import { formatPrice, cn } from "@/lib/utils";
 import { Button } from "@/components/ui-button";
@@ -35,6 +35,19 @@ export default function AdminSAC() {
     const interval = setInterval(fetchTickets, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  const hasAutoOpenedTicketRef = useRef(false);
+  useEffect(() => {
+    if (hasAutoOpenedTicketRef.current || tickets.length === 0) return;
+    if (typeof window === "undefined") return;
+    const ticketIdParam = new URLSearchParams(window.location.search).get("ticketId")?.trim();
+    if (!ticketIdParam) return;
+    const matched = tickets.find((t) => t.id === ticketIdParam);
+    if (matched) {
+      hasAutoOpenedTicketRef.current = true;
+      setSelectedTicket(matched);
+    }
+  }, [tickets]);
 
   const updateTicketStatus = async (ticketId: string, status: string) => {
     await fetch(`/api/tickets/${ticketId}`, {
