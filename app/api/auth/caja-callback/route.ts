@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exchangeCaJaToken } from "@/lib/caja-client";
-import prisma from "@/lib/prisma";
+import { exchangeCaJaToken, getPublicBaseUrl } from "@/lib/caja-client";
+import { prisma } from "@/lib/prisma";
 import { SignJWT } from "jose";
-import { getRequestBaseUrl } from "@/lib/utils";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "pdv-fabrica-premium-secret-key-2026"
@@ -22,6 +21,21 @@ function getDashboardRedirectUrl(role: string, baseUrl: string): string {
   }
 }
 
+function resolvePostLoginUrl(
+  role: string,
+  baseUrl: string,
+  statePath: string
+): string {
+  const isSafeRelative =
+    statePath.startsWith("/") && !statePath.startsWith("//");
+  if (isSafeRelative) {
+    if (!statePath.startsWith("/admin") || role === "ADMIN") {
+      return new URL(statePath, baseUrl).toString();
+    }
+  }
+  return getDashboardRedirectUrl(role, baseUrl);
+}
+
 async function createSessionResponse(user: any, role: string, redirectUrl: string) {
   const token = await new SignJWT({
     id: user.id,
@@ -38,7 +52,7 @@ async function createSessionResponse(user: any, role: string, redirectUrl: strin
   response.cookies.set("auth_token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 60 * 60 * 24, // 24 hours
     path: "/",
   });
@@ -50,19 +64,22 @@ async function createSessionResponse(user: any, role: string, redirectUrl: strin
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const statePath = request.nextUrl.searchParams.get("state")?.trim() || "";
 
   if (!code) {
     return NextResponse.json({ error: "Código de autorização não fornecido" }, { status: 400 });
   }
 
   try {
-    const baseUrl = getRequestBaseUrl(request);
+    const baseUrl = getPublicBaseUrl(request);
     const cajaData = await exchangeCaJaToken(code);
     const cajaUser = cajaData.user;
 
     // Normalize role to app-specific uppercase role
     let role = (cajaUser.role || "CUSTOMER").toUpperCase();
-    if (role === "USUARIO" || role === "USER") {
+    if (role === "SUPERADM") {
+      role = "ADMIN";
+    } else if (role === "USUARIO" || role === "USER") {
       role = "CUSTOMER";
     }
     if (!["ADMIN", "GESTOR", "SEPARADOR", "CUSTOMER"].includes(role)) {
@@ -79,20 +96,41 @@ export async function GET(request: NextRequest) {
         where: { id: linkedUser.id },
         data: { cajaRole: role, role: role }
       });
-      return await createSessionResponse(updatedUser, role, getDashboardRedirectUrl(role, baseUrl));
+      return await createSessionResponse(
+        updatedUser,
+        role,
+        resolvePostLoginUrl(role, baseUrl, statePath)
+      );
     }
 
-    // Scenario 2: Same email
-    const sameEmailUser = await prisma.user.findUnique({
-      where: { email: cajaUser.email }
+    // Scenario 2: Same email (re-vincula caso houvesse cajaUserId antigo/órfão)
+    const sameEmailUser = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: cajaUser.email.trim(),
+          mode: "insensitive",
+        },
+      },
     });
 
     if (sameEmailUser) {
+      await prisma.user.updateMany({
+        where: {
+          cajaUserId: cajaUser.id,
+          NOT: { id: sameEmailUser.id },
+        },
+        data: { cajaUserId: null },
+      });
+
       const updatedUser = await prisma.user.update({
         where: { id: sameEmailUser.id },
         data: { cajaUserId: cajaUser.id, cajaRole: role, role: role }
       });
-      return await createSessionResponse(updatedUser, role, getDashboardRedirectUrl(role, baseUrl));
+      return await createSessionResponse(
+        updatedUser,
+        role,
+        resolvePostLoginUrl(role, baseUrl, statePath)
+      );
     }
 
     // Scenario 3: Not found - Redirect to linking decision page

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
 
@@ -34,12 +34,26 @@ export async function POST(request: NextRequest) {
 
     if (action === "create-new") {
       // 1. Double check if email already registered locally (to prevent race conditions/duplicate error)
-      const existingEmail = await prisma.user.findUnique({
-        where: { email: cajaUser.email }
+      const existingEmail = await prisma.user.findFirst({
+        where: {
+          email: {
+            equals: String(cajaUser.email).trim(),
+            mode: "insensitive",
+          },
+        },
       });
 
       if (existingEmail) {
-        // Link automatically if user now exists
+        // Clear any stale reference to this cajaUserId on another record before linking
+        await prisma.user.updateMany({
+          where: {
+            cajaUserId: cajaUser.id,
+            NOT: { id: existingEmail.id },
+          },
+          data: { cajaUserId: null },
+        });
+
+        // Link automatically (overwriting old/orphan cajaUserId if present)
         localUser = await prisma.user.update({
           where: { id: existingEmail.id },
           data: {
@@ -49,11 +63,17 @@ export async function POST(request: NextRequest) {
           }
         });
       } else {
+        // Clear any stale reference to this cajaUserId on another record before creating
+        await prisma.user.updateMany({
+          where: { cajaUserId: cajaUser.id },
+          data: { cajaUserId: null },
+        });
+
         // Create new local user with CaJa details
         localUser = await prisma.user.create({
           data: {
             name: cajaUser.name,
-            email: cajaUser.email,
+            email: String(cajaUser.email).trim(),
             cajaUserId: cajaUser.id,
             cajaRole: cajaUser.role,
             role: cajaUser.role,
@@ -88,8 +108,15 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Check credentials of local existing account
-      const existingUser = await prisma.user.findUnique({ where: { email } });
+      // Check credentials of local existing account (case-insensitive)
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: {
+            equals: String(email).trim(),
+            mode: "insensitive",
+          },
+        },
+      });
 
       if (!existingUser || !existingUser.password) {
         return NextResponse.json(
@@ -106,7 +133,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Link local account to CaJa
+      // Clear any stale reference to this cajaUserId on another record before linking
+      await prisma.user.updateMany({
+        where: {
+          cajaUserId: cajaUser.id,
+          NOT: { id: existingUser.id },
+        },
+        data: { cajaUserId: null },
+      });
+
+      // Link (or re-link orphan cajaUserId) local account to CaJa
       localUser = await prisma.user.update({
         where: { id: existingUser.id },
         data: {

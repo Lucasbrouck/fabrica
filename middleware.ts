@@ -5,12 +5,24 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "pdv-fabrica-premium-secret-key-2026"
 );
 
+const PUBLIC_ROUTES = [
+  "/api/auth/caja-redirect",
+  "/api/auth/caja-callback",
+  "/api/auth/caja-verify",
+  "/api/auth/caja-link",
+  "/api/portal/pending-tasks",
+  "/auth/link-account",
+];
+
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
   const { pathname } = request.nextUrl;
 
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+
   // Paths that don't require authentication
   if (
+    isPublicRoute ||
     pathname === "/" ||
     pathname.includes("/api/auth") ||
     pathname.startsWith("/auth/") ||
