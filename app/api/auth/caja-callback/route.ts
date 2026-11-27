@@ -41,18 +41,20 @@ async function createSessionResponse(user: any, role: string, redirectUrl: strin
     id: user.id,
     email: user.email,
     role: role,
-    mustChangePassword: user.mustChangePassword || false,
+    mustChangePassword: false,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("24h")
     .sign(JWT_SECRET);
 
+  const isProd = process.env.NODE_ENV === "production";
   const response = NextResponse.redirect(redirectUrl);
   response.cookies.set("auth_token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    partitioned: isProd,
     maxAge: 60 * 60 * 24, // 24 hours
     path: "/",
   });
@@ -133,24 +135,48 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Scenario 3: Not found - Redirect to linking decision page
-    const pendingCookieVal = JSON.stringify({
-      id: cajaUser.id,
-      email: cajaUser.email,
-      name: cajaUser.name,
-      role: role
+    // Scenario 3: Not found - Auto-provision local user via CaJa SSO
+    await prisma.user.updateMany({
+      where: { cajaUserId: cajaUser.id },
+      data: { cajaUserId: null },
     });
 
-    const response = NextResponse.redirect(new URL("/auth/link-account", baseUrl));
-    response.cookies.set("caja_pending", pendingCookieVal, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 600, // 10 minutes
-      path: "/",
+    const normalizedEmail = cajaUser.email.trim().toLowerCase();
+    let newUser = await prisma.user.create({
+      data: {
+        name: cajaUser.name || normalizedEmail.split("@")[0],
+        email: normalizedEmail,
+        cajaUserId: cajaUser.id,
+        cajaRole: role,
+        role: role,
+        mustChangePassword: false,
+      },
     });
 
-    return response;
+    if (role === "CUSTOMER") {
+      try {
+        const { createAsaasCustomer } = await import("@/lib/asaas");
+        const asaasCustomer = await createAsaasCustomer({
+          name: newUser.name,
+          email: newUser.email,
+          cnpj: "",
+        });
+        if (asaasCustomer && asaasCustomer.id) {
+          newUser = await prisma.user.update({
+            where: { id: newUser.id },
+            data: { asaasCustomerId: asaasCustomer.id },
+          });
+        }
+      } catch (asaasError) {
+        console.error("Failed to create Asaas customer for new CaJa user:", asaasError);
+      }
+    }
+
+    return await createSessionResponse(
+      newUser,
+      role,
+      resolvePostLoginUrl(role, baseUrl, statePath)
+    );
 
   } catch (error: any) {
     console.error("CaJa Callback Error:", error);

@@ -161,20 +161,22 @@ export async function POST(request: NextRequest) {
       id: localUser.id,
       email: localUser.email,
       role: cajaUser.role,
-      mustChangePassword: localUser.mustChangePassword || false,
+      mustChangePassword: false,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("24h")
       .sign(JWT_SECRET);
 
+    const isProd = process.env.NODE_ENV === "production";
     const response = NextResponse.json({ success: true, role: cajaUser.role });
     
     // Set local authentication cookie
     response.cookies.set("auth_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      partitioned: isProd,
       maxAge: 60 * 60 * 24, // 24 hours
       path: "/",
     });
